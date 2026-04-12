@@ -1,0 +1,27 @@
+# Cache (se regenera en cada ejecucion)
+sp500_weekly_cache.pkl
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Archivos temporales de optimizacion
+optimize_config.py
+optimize_fast.py
+test_subindustry.py
+
+# Estado local de cartera (se regenera)
+portfolio_state.json
+
+# Reports texto (el HTML es lo que publicamos)
+weekly_reports/
