@@ -1,872 +1,951 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MT 2.0 Screener - 2026-04-07</title>
-<style>
-  :root {
-    --bg: #0f172a; --card: #1e293b; --card2: #334155;
-    --text: #e2e8f0; --text2: #94a3b8; --accent: #3b82f6;
-    --green: #10b981; --red: #ef4444; --orange: #f59e0b;
-    --blue: #3b82f6; --purple: #8b5cf6;
-  }
-  * { margin:0; padding:0; box-sizing:border-box; }
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    background: var(--bg); color: var(--text);
-    line-height: 1.5; padding: 0; max-width: 100vw; overflow-x: hidden;
-  }
-  .container { max-width: 900px; margin: 0 auto; padding: 12px; }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#0B0F1A">
+  <meta name="description" content="Dashboard operativo Weinstein — Stage 2 + Mansfield RS">
+  <title>Weinstein · Dashboard Operativo</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%2310B981'/%3E%3Ctext x='50' y='68' font-size='60' font-family='system-ui' font-weight='800' text-anchor='middle' fill='%230B0F1A'%3EW%3C/text%3E%3C/svg%3E">
+  <style>
+    /* =========================================================
+       1. Reset + tokens
+       ========================================================= */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { -webkit-text-size-adjust: 100%; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      font-feature-settings: "tnum" 1, "lnum" 1;
+      line-height: 1.45;
+      color: var(--text-primary);
+      background: var(--bg-base);
+      min-height: 100vh;
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+    button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+    a { color: var(--blue); text-decoration: none; }
+    a:hover { text-decoration: underline; }
 
-  /* HEADER */
-  .header {
-    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-    border-bottom: 2px solid var(--card2);
-    padding: 16px 12px; text-align: center;
-  }
-  .header h1 { font-size: 1.3rem; font-weight: 700; letter-spacing: 1px; }
-  .header .date { color: var(--text2); font-size: 0.85rem; margin-top: 4px; }
-  .header .updated { color: var(--text2); font-size: 0.7rem; }
+    :root {
+      /* Palette */
+      --bg-base:       #0B0F1A;
+      --bg-elevated:   #111827;
+      --bg-hover:      #1A2231;
+      --border:        #1F2937;
+      --border-strong: #374151;
 
-  /* SEMAFORO */
-  .semaforo {
-    display: flex; align-items: center; justify-content: center; gap: 12px;
-    padding: 16px; margin: 12px 0; border-radius: 12px;
-    background: var(--card); border: 2px solid #ef4444;
-  }
-  .semaforo-light {
-    width: 48px; height: 48px; border-radius: 50%;
-    background: #ef4444; box-shadow: 0 0 20px #ef444480;
-  }
-  .semaforo-text { text-align: left; }
-  .semaforo-text h2 { font-size: 1.2rem; color: #ef4444; }
-  .semaforo-text .conditions { font-size: 0.8rem; color: var(--text2); }
-  .cond-ok { color: var(--green); }
-  .cond-fail { color: var(--red); }
+      --text-primary:   #F9FAFB;
+      --text-secondary: #9CA3AF;
+      --text-muted:     #6B7280;
 
-  /* STATS BAR */
-  .stats-bar {
-    display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 12px 0;
-  }
-  .stat-card {
-    background: var(--card); border-radius: 10px; padding: 12px; text-align: center;
-  }
-  .stat-card .stat-value { font-size: 1.3rem; font-weight: 700; color: var(--accent); }
-  .stat-card .stat-label { font-size: 0.7rem; color: var(--text2); text-transform: uppercase; }
+      --green:    #10B981;
+      --green-bg: rgba(16,185,129,0.12);
+      --red:      #EF4444;
+      --red-bg:   rgba(239,68,68,0.12);
+      --amber:    #F59E0B;
+      --amber-bg: rgba(245,158,11,0.12);
+      --blue:     #3B82F6;
+      --blue-bg:  rgba(59,130,246,0.12);
+      --purple:   #8B5CF6;
+      --purple-bg:rgba(139,92,246,0.12);
 
-  /* SECTIONS */
-  .section { margin: 20px 0; }
-  .section-title {
-    font-size: 1rem; font-weight: 700; text-transform: uppercase;
-    letter-spacing: 1px; color: var(--text2); margin-bottom: 10px;
-    padding-bottom: 6px; border-bottom: 1px solid var(--card2);
-  }
+      --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
 
-  /* CARDS */
-  .card {
-    background: var(--card); border-radius: 10px; padding: 12px;
-    margin-bottom: 8px; border: 1px solid var(--card2);
-  }
-  .card.blocked { opacity: 0.6; }
+      --radius-sm: 6px;
+      --radius:    10px;
+      --radius-lg: 14px;
+    }
 
-  /* POSITION CARD */
-  .pos-header {
-    display: flex; align-items: center; gap: 8px; margin-bottom: 8px;
-  }
-  .pos-symbol { font-size: 1.1rem; font-weight: 700; }
-  .pos-pnl { margin-left: auto; font-size: 1.1rem; font-weight: 700; }
-  .pos-details {
-    display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px;
-  }
-  .pos-detail { display: flex; flex-direction: column; }
-  .pos-detail .label { font-size: 0.65rem; color: var(--text2); text-transform: uppercase; }
-  .pos-detail .value { font-size: 0.85rem; font-weight: 600; }
-  .pos-detail .value.small { font-size: 0.7rem; font-weight: 400; }
+    /* =========================================================
+       2. Layout
+       ========================================================= */
+    #app { max-width: 720px; margin: 0 auto; padding: 0 16px 64px; }
+    @media (min-width: 900px) {
+      #app { max-width: 1100px; padding: 0 24px 64px; }
+    }
 
-  /* SIGNAL CARD */
-  .sig-header {
-    display: flex; align-items: center; gap: 8px; margin-bottom: 8px;
-  }
-  .sig-rank { font-size: 0.8rem; color: var(--text2); font-weight: 700; }
-  .sig-symbol { font-size: 1.1rem; font-weight: 700; }
-  .sig-details {
-    display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px;
-  }
-  .sig-detail { display: flex; flex-direction: column; }
-  .sig-detail .label { font-size: 0.65rem; color: var(--text2); text-transform: uppercase; }
-  .sig-detail .value { font-size: 0.85rem; font-weight: 600; }
-  .sig-detail .value.small { font-size: 0.7rem; font-weight: 400; }
-  .stop-val { color: var(--red); }
-  .ms-val { color: var(--green); }
-  .risk-val { color: var(--orange); }
+    /* =========================================================
+       3. Header
+       ========================================================= */
+    header.app-header {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: linear-gradient(180deg, var(--bg-base) 80%, rgba(11,15,26,0.92) 100%);
+      padding: 16px 0 12px;
+      margin-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .header-title {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .header-title h1 {
+      font-size: clamp(18px, 4vw, 22px);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+    .header-title h1 .accent { color: var(--green); }
+    .header-subtitle {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+    .header-pills {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+    }
 
-  /* BADGES */
-  .badge {
-    display: inline-block; padding: 2px 8px; border-radius: 6px;
-    font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
-  }
-  .badge-green { background: #10b98120; color: var(--green); }
-  .badge-orange { background: #f59e0b20; color: var(--orange); }
-  .badge-blue { background: #3b82f620; color: var(--blue); }
-  .badge-gray { background: #64748b20; color: #64748b; }
-  .badge-buy {
-    background: var(--green); color: #000; font-weight: 800;
-    animation: pulse 2s infinite;
-  }
-  @keyframes pulse {
-    0%, 100% { opacity: 1; } 50% { opacity: 0.7; }
-  }
+    /* =========================================================
+       4. Pills, badges, banners
+       ========================================================= */
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+      line-height: 1;
+      border: 1px solid transparent;
+      white-space: nowrap;
+    }
+    .pill .dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: currentColor;
+      flex-shrink: 0;
+    }
+    .pill.verde  { color: var(--green);  background: var(--green-bg);  border-color: rgba(16,185,129,0.3); }
+    .pill.rojo   { color: var(--red);    background: var(--red-bg);    border-color: rgba(239,68,68,0.3); }
+    .pill.amber  { color: var(--amber);  background: var(--amber-bg);  border-color: rgba(245,158,11,0.3); }
+    .pill.blue   { color: var(--blue);   background: var(--blue-bg);   border-color: rgba(59,130,246,0.3); }
+    .pill.purple { color: var(--purple); background: var(--purple-bg); border-color: rgba(139,92,246,0.3); }
+    .pill.muted  { color: var(--text-secondary); background: var(--bg-elevated); border-color: var(--border); }
 
-  /* BACKTEST */
-  .bt-grid {
-    display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px;
-  }
-  .bt-item {
-    display: flex; justify-content: space-between; padding: 6px 10px;
-    background: var(--card2); border-radius: 6px;
-  }
-  .bt-item .bt-label { color: var(--text2); font-size: 0.8rem; }
-  .bt-item .bt-value { font-weight: 700; font-size: 0.85rem; }
+    .pill.pulse .dot { animation: pulse 1.6s ease-in-out infinite; }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50%      { opacity: 0.4; transform: scale(0.9); }
+    }
 
-  /* EQUITY CHART */
-  .chart-container {
-    background: var(--card); border-radius: 10px; padding: 12px;
-    margin: 12px 0; overflow: hidden;
-  }
-  .chart-container svg { width: 100%; height: auto; }
+    /* Big banner */
+    .banner {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      padding: 14px 16px;
+      border-radius: var(--radius);
+      border-left: 4px solid;
+      margin-bottom: 16px;
+      font-size: 14px;
+    }
+    .banner-icon { font-size: 20px; line-height: 1; flex-shrink: 0; margin-top: 1px; }
+    .banner-body { flex: 1; }
+    .banner-title { font-weight: 700; margin-bottom: 2px; }
+    .banner-text  { color: var(--text-secondary); font-size: 13px; }
 
-  /* TABLE */
-  table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
-  th { color: var(--text2); font-weight: 600; text-align: left; padding: 6px 8px;
-       border-bottom: 1px solid var(--card2); font-size: 0.7rem; text-transform: uppercase; }
-  td { padding: 6px 8px; border-bottom: 1px solid #1e293b40; }
-  .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; }
-  .dot-green { background: var(--green); }
-  .dot-red { background: var(--red); }
+    .banner.rojo  { background: var(--red-bg);   border-color: var(--red);   }
+    .banner.amber { background: var(--amber-bg); border-color: var(--amber); }
+    .banner.blue  { background: var(--blue-bg);  border-color: var(--blue);  }
 
-  /* METHOD INFO */
-  .method-info { font-size: 0.75rem; color: var(--text2); line-height: 1.7; }
-  .method-info strong { color: var(--text); }
+    /* =========================================================
+       5. Panels
+       ========================================================= */
+    section.panel {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      margin-bottom: 16px;
+      overflow: hidden;
+    }
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .panel-header h2 {
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+    }
+    .panel-body { padding: 8px 0; }
+    .panel-empty {
+      padding: 24px 16px;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 13px;
+    }
+    .panel-empty .empty-icon {
+      display: block;
+      font-size: 28px;
+      margin-bottom: 8px;
+      opacity: 0.5;
+    }
+    .panel-empty strong { color: var(--text-secondary); }
 
-  /* RESPONSIVE */
-  @media (max-width: 600px) {
-    .pos-details, .sig-details { grid-template-columns: repeat(2, 1fr); }
-    .bt-grid { grid-template-columns: 1fr; }
-    .stats-bar { grid-template-columns: repeat(3, 1fr); gap: 4px; }
-    .stat-card { padding: 8px; }
-    .stat-card .stat-value { font-size: 1.1rem; }
-    .hide-mobile { display: none; }
-  }
+    /* =========================================================
+       6. Rows / cards inside panels
+       ========================================================= */
+    .row {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 8px;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .row:last-child { border-bottom: 0; }
 
-  /* FOOTER */
-  .footer {
-    text-align: center; padding: 20px; color: var(--text2);
-    font-size: 0.7rem; border-top: 1px solid var(--card2); margin-top: 30px;
-  }
-</style>
+    .row-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .row-symbol {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .row-symbol .sym {
+      font-size: 17px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+    }
+    .row-symbol .name {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+    .row-meta {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .row-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px 12px;
+      padding-top: 4px;
+    }
+    @media (min-width: 600px) {
+      .row-grid { grid-template-columns: repeat(4, 1fr); }
+    }
+
+    .kpi { display: flex; flex-direction: column; gap: 2px; }
+    .kpi-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .kpi-value {
+      font-family: var(--mono);
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    .kpi-value.green { color: var(--green); }
+    .kpi-value.red   { color: var(--red); }
+    .kpi-value.amber { color: var(--amber); }
+
+    .row-note {
+      font-size: 12px;
+      color: var(--text-secondary);
+      padding: 6px 10px;
+      background: rgba(255,255,255,0.03);
+      border-radius: var(--radius-sm);
+      border-left: 2px solid var(--border-strong);
+    }
+    .row-note.urgent { border-color: var(--red); color: var(--text-primary); }
+    .row-note.warn   { border-color: var(--amber); color: var(--text-primary); }
+    .row-note.success{ border-color: var(--green); color: var(--text-primary); }
+
+    /* Action card variants (left-border emphasis) */
+    .row.action {
+      border-left: 4px solid transparent;
+    }
+    .row.action.urgent  { border-left-color: var(--red);    background: linear-gradient(90deg, var(--red-bg) 0%, transparent 30%); }
+    .row.action.warn    { border-left-color: var(--amber);  background: linear-gradient(90deg, var(--amber-bg) 0%, transparent 30%); }
+    .row.action.success { border-left-color: var(--purple); background: linear-gradient(90deg, var(--purple-bg) 0%, transparent 30%); }
+
+    /* =========================================================
+       7. Stats strip
+       ========================================================= */
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1px;
+      background: var(--border);
+    }
+    @media (min-width: 600px) {
+      .stats { grid-template-columns: repeat(4, 1fr); }
+    }
+    .stat {
+      background: var(--bg-elevated);
+      padding: 12px 16px;
+    }
+    .stat-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 4px;
+    }
+    .stat-value {
+      font-family: var(--mono);
+      font-size: 18px;
+      font-weight: 700;
+    }
+    .stat-value.green { color: var(--green); }
+    .stat-value.amber { color: var(--amber); }
+    .stat-value.red   { color: var(--red); }
+
+    /* =========================================================
+       8. Section dividers inside panels
+       ========================================================= */
+    h3.section-divider {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin: 8px 16px 4px;
+      padding-top: 6px;
+    }
+
+    /* =========================================================
+       9. Footer
+       ========================================================= */
+    footer.app-footer {
+      margin-top: 32px;
+      padding: 24px 16px;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 11px;
+      line-height: 1.7;
+      border-top: 1px solid var(--border);
+    }
+    footer.app-footer strong { color: var(--text-secondary); }
+
+    /* =========================================================
+       10. Loading / error fullscreen
+       ========================================================= */
+    .fullscreen-state {
+      min-height: 60vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 24px;
+      gap: 12px;
+    }
+    .fullscreen-state .spinner {
+      width: 32px; height: 32px;
+      border: 3px solid var(--border);
+      border-top-color: var(--green);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .fullscreen-state h2 { font-size: 18px; margin-bottom: 4px; }
+    .fullscreen-state p  { color: var(--text-secondary); font-size: 14px; max-width: 360px; }
+    .fullscreen-state code {
+      font-family: var(--mono);
+      background: var(--bg-elevated);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 12px;
+    }
+  </style>
 </head>
 <body>
 
-<div class="header">
-  <h1>METODO TENDENCIA 2.0</h1>
-  <div class="date">Reporte semanal &mdash; 2026-04-07</div>
-  <div class="updated">Generado: 2026-04-12 11:26 | S&P 500 | 10 posiciones</div>
-</div>
-
-<div class="container">
-
-  <!-- SEMAFORO -->
-  <div class="semaforo">
-    <div class="semaforo-light"></div>
-    <div class="semaforo-text">
-      <h2>SEMAFORO ROJO</h2>
-      <div class="conditions">
-        NH-NL (rising + &gt;MA50): <span class="cond-fail">FALLO</span>
-        &nbsp;|&nbsp;
-        QQQ &gt; WMA30: <span class="cond-ok">OK</span>
-      </div>
-      <div class="conditions">
-        No se abren nuevas posiciones. Existentes siguen con stops.
-      </div>
+  <main id="app">
+    <div class="fullscreen-state" id="bootstrap">
+      <div class="spinner"></div>
+      <h2>Cargando datos…</h2>
+      <p>Leyendo el último cierre semanal y la cartera actual.</p>
     </div>
-  </div>
+  </main>
 
-  <!-- STATS BAR -->
-  <div class="stats-bar">
-    <div class="stat-card">
-      <div class="stat-value">$548,554</div>
-      <div class="stat-label">Equity</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-value">7/10</div>
-      <div class="stat-label">Posiciones</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-value">23</div>
-      <div class="stat-label">Senales</div>
-    </div>
-  </div>
+  <script>
+  /* ============================================================
+     APP — Weinstein Operativo Dashboard
+     Vanilla JS. Sin dependencias. GitHub Pages compatible.
+     ============================================================ */
 
-  <!-- CARTERA -->
-  <div class="section">
-    <div class="section-title">Cartera Actual</div>
-    
-        <div class="card position-card">
-          <div class="pos-header">
-            <span class="pos-symbol">FIX</span>
-            <span class="badge badge-green">RUNNER</span>
-            <span class="pos-pnl" style="color:#10b981">+250.7%</span>
-          </div>
-          <div class="pos-details">
-            <div class="pos-detail"><span class="label">Entrada</span><span class="value">$454.13</span></div>
-            <div class="pos-detail"><span class="label">Actual</span><span class="value">$1592.84</span></div>
-            <div class="pos-detail"><span class="label">Stop</span><span class="value stop-val">$1188.83</span></div>
-            <div class="pos-detail"><span class="label">Semanas</span><span class="value">48w</span></div>
-            <div class="pos-detail"><span class="label">Sizing</span><span class="value">100%</span></div>
-            <div class="pos-detail"><span class="label">Obj 2R</span><span class="value">$600.24</span></div>
-            <div class="pos-detail"><span class="label">Obj 3R</span><span class="value">$673.29</span></div>
-            <div class="pos-detail"><span class="label">Sub-Ind</span><span class="value small">Construction & Engineering</span></div>
-          </div>
-        </div>
-        <div class="card position-card">
-          <div class="pos-header">
-            <span class="pos-symbol">WDC</span>
-            <span class="badge badge-green">RUNNER</span>
-            <span class="pos-pnl" style="color:#10b981">+102.5%</span>
-          </div>
-          <div class="pos-details">
-            <div class="pos-detail"><span class="label">Entrada</span><span class="value">$169.62</span></div>
-            <div class="pos-detail"><span class="label">Actual</span><span class="value">$343.43</span></div>
-            <div class="pos-detail"><span class="label">Stop</span><span class="value stop-val">$235.87</span></div>
-            <div class="pos-detail"><span class="label">Semanas</span><span class="value">18w</span></div>
-            <div class="pos-detail"><span class="label">Sizing</span><span class="value">50%</span></div>
-            <div class="pos-detail"><span class="label">Obj 2R</span><span class="value">$277.45</span></div>
-            <div class="pos-detail"><span class="label">Obj 3R</span><span class="value">$331.36</span></div>
-            <div class="pos-detail"><span class="label">Sub-Ind</span><span class="value small">Technology Hardware, Storage &</span></div>
-          </div>
-        </div>
-        <div class="card position-card">
-          <div class="pos-header">
-            <span class="pos-symbol">TPR</span>
-            <span class="badge badge-green">RUNNER</span>
-            <span class="pos-pnl" style="color:#10b981">+83.9%</span>
-          </div>
-          <div class="pos-details">
-            <div class="pos-detail"><span class="label">Entrada</span><span class="value">$81.71</span></div>
-            <div class="pos-detail"><span class="label">Actual</span><span class="value">$150.30</span></div>
-            <div class="pos-detail"><span class="label">Stop</span><span class="value stop-val">$131.73</span></div>
-            <div class="pos-detail"><span class="label">Semanas</span><span class="value">48w</span></div>
-            <div class="pos-detail"><span class="label">Sizing</span><span class="value">100%</span></div>
-            <div class="pos-detail"><span class="label">Obj 2R</span><span class="value">$109.09</span></div>
-            <div class="pos-detail"><span class="label">Obj 3R</span><span class="value">$122.78</span></div>
-            <div class="pos-detail"><span class="label">Sub-Ind</span><span class="value small">Apparel, Accessories & Luxury </span></div>
-          </div>
-        </div>
-        <div class="card position-card">
-          <div class="pos-header">
-            <span class="pos-symbol">STX</span>
-            <span class="badge badge-blue">POST-2R</span>
-            <span class="pos-pnl" style="color:#10b981">+76.8%</span>
-          </div>
-          <div class="pos-details">
-            <div class="pos-detail"><span class="label">Entrada</span><span class="value">$284.55</span></div>
-            <div class="pos-detail"><span class="label">Actual</span><span class="value">$503.13</span></div>
-            <div class="pos-detail"><span class="label">Stop</span><span class="value stop-val">$352.62</span></div>
-            <div class="pos-detail"><span class="label">Semanas</span><span class="value">18w</span></div>
-            <div class="pos-detail"><span class="label">Sizing</span><span class="value">100%</span></div>
-            <div class="pos-detail"><span class="label">Obj 2R</span><span class="value">$431.72</span></div>
-            <div class="pos-detail"><span class="label">Obj 3R</span><span class="value">$505.31</span></div>
-            <div class="pos-detail"><span class="label">Sub-Ind</span><span class="value small">Technology Hardware, Storage &</span></div>
-          </div>
-        </div>
-        <div class="card position-card">
-          <div class="pos-header">
-            <span class="pos-symbol">PWR</span>
-            <span class="badge badge-green">RUNNER</span>
-            <span class="pos-pnl" style="color:#10b981">+74.8%</span>
-          </div>
-          <div class="pos-details">
-            <div class="pos-detail"><span class="label">Entrada</span><span class="value">$334.86</span></div>
-            <div class="pos-detail"><span class="label">Actual</span><span class="value">$585.36</span></div>
-            <div class="pos-detail"><span class="label">Stop</span><span class="value stop-val">$491.76</span></div>
-            <div class="pos-detail"><span class="label">Semanas</span><span class="value">48w</span></div>
-            <div class="pos-detail"><span class="label">Sizing</span><span class="value">100%</span></div>
-            <div class="pos-detail"><span class="label">Obj 2R</span><span class="value">$442.12</span></div>
-            <div class="pos-detail"><span class="label">Obj 3R</span><span class="value">$495.75</span></div>
-            <div class="pos-detail"><span class="label">Sub-Ind</span><span class="value small">Construction & Engineering</span></div>
-          </div>
-        </div>
-        <div class="card position-card">
-          <div class="pos-header">
-            <span class="pos-symbol">BK</span>
-            <span class="badge badge-green">RUNNER</span>
-            <span class="pos-pnl" style="color:#10b981">+48.4%</span>
-          </div>
-          <div class="pos-details">
-            <div class="pos-detail"><span class="label">Entrada</span><span class="value">$85.98</span></div>
-            <div class="pos-detail"><span class="label">Actual</span><span class="value">$127.56</span></div>
-            <div class="pos-detail"><span class="label">Stop</span><span class="value stop-val">$114.07</span></div>
-            <div class="pos-detail"><span class="label">Semanas</span><span class="value">48w</span></div>
-            <div class="pos-detail"><span class="label">Sizing</span><span class="value">100%</span></div>
-            <div class="pos-detail"><span class="label">Obj 2R</span><span class="value">$102.62</span></div>
-            <div class="pos-detail"><span class="label">Obj 3R</span><span class="value">$110.94</span></div>
-            <div class="pos-detail"><span class="label">Sub-Ind</span><span class="value small">Asset Management & Custody Ban</span></div>
-          </div>
-        </div>
-        <div class="card position-card">
-          <div class="pos-header">
-            <span class="pos-symbol">MRNA</span>
-            <span class="badge badge-gray">HOLD</span>
-            <span class="pos-pnl" style="color:#10b981">+9.6%</span>
-          </div>
-          <div class="pos-details">
-            <div class="pos-detail"><span class="label">Entrada</span><span class="value">$46.51</span></div>
-            <div class="pos-detail"><span class="label">Actual</span><span class="value">$50.96</span></div>
-            <div class="pos-detail"><span class="label">Stop</span><span class="value stop-val">$40.92</span></div>
-            <div class="pos-detail"><span class="label">Semanas</span><span class="value">11w</span></div>
-            <div class="pos-detail"><span class="label">Sizing</span><span class="value">100% (addon)</span></div>
-            <div class="pos-detail"><span class="label">Obj 2R</span><span class="value">$77.62</span></div>
-            <div class="pos-detail"><span class="label">Obj 3R</span><span class="value">$93.18</span></div>
-            <div class="pos-detail"><span class="label">Sub-Ind</span><span class="value small">Biotechnology</span></div>
-          </div>
-        </div>
-  </div>
+  const DATA_URL   = "data.json";
+  const STATUS_URL = "update_status.json";
 
-  <!-- SENALES -->
-  <div class="section">
-    <div class="section-title">
-      Senales de Entrada &mdash; Comprar al OPEN del Lunes
-      <span style="color:var(--red);font-size:0.8rem;"> (BLOQUEADAS - Semaforo Rojo)</span>
-    </div>
-    
-        <div class="card signal-card blocked">
-          <div class="sig-header">
-            <span class="sig-rank">#1</span>
-            <span class="sig-symbol">AMD</span>
-            <span class="badge badge-orange">CT</span>
-            
-          </div>
-          <div class="sig-details">
-            <div class="sig-detail"><span class="label">MS Stock</span><span class="value ms-val">+28.2</span></div>
-            <div class="sig-detail"><span class="label">MS SubInd</span><span class="value">+12.9</span></div>
-            <div class="sig-detail"><span class="label">ATR Dist</span><span class="value">1.0</span></div>
-            <div class="sig-detail"><span class="label">Sizing</span><span class="value">100%</span></div>
-            <div class="sig-detail"><span class="label">Cierre</span><span class="value">$245.04</span></div>
-            <div class="sig-detail"><span class="label">Stop</span><span class="value stop-val">$210.73</span></div>
-            <div class="sig-detail"><span class="label">Riesgo</span><span class="value risk-val">14.0%</span></div>
-            <div class="sig-detail"><span class="label">Sub-Ind</span><span class="value small">Semiconductors</span></div>
-          </div>
-        </div>
-        <div class="card signal-card blocked">
-          <div class="sig-header">
-            <span class="sig-rank">#2</span>
-            <span class="sig-symbol">GOOGL</span>
-            <span class="badge badge-orange">CT</span>
-            
-          </div>
-          <div class="sig-details">
-            <div class="sig-detail"><span class="label">MS Stock</span><span class="value ms-val">+21.6</span></div>
-            <div class="sig-detail"><span class="label">MS SubInd</span><span class="value">+6.3</span></div>
-            <div class="sig-detail"><span class="label">ATR Dist</span><span class="value">0.5</span></div>
-            <div class="sig-detail"><span class="label">Sizing</span><span class="value">100%</span></div>
-            <div class="sig-detail"><span class="label">Cierre</span><span class="value">$317.24</span></div>
-            <div class="sig-detail"><span class="label">Stop</span><span class="value stop-val">$298.63</span></div>
-            <div class="sig-detail"><span class="label">Riesgo</span><span class="value risk-val">5.9%</span></div>
-            <div class="sig-detail"><span class="label">Sub-Ind</span><span class="value small">Interactive Media & Services</span></div>
-          </div>
-        </div>
-        <div class="card signal-card blocked">
-          <div class="sig-header">
-            <span class="sig-rank">#3</span>
-            <span class="sig-symbol">GOOG</span>
-            <span class="badge badge-orange">CT</span>
-            
-          </div>
-          <div class="sig-details">
-            <div class="sig-detail"><span class="label">MS Stock</span><span class="value ms-val">+20.7</span></div>
-            <div class="sig-detail"><span class="label">MS SubInd</span><span class="value">+6.3</span></div>
-            <div class="sig-detail"><span class="label">ATR Dist</span><span class="value">0.4</span></div>
-            <div class="sig-detail"><span class="label">Sizing</span><span class="value">100%</span></div>
-            <div class="sig-detail"><span class="label">Cierre</span><span class="value">$315.72</span></div>
-            <div class="sig-detail"><span class="label">Stop</span><span class="value stop-val">$298.45</span></div>
-            <div class="sig-detail"><span class="label">Riesgo</span><span class="value risk-val">5.5%</span></div>
-            <div class="sig-detail"><span class="label">Sub-Ind</span><span class="value small">Interactive Media & Services</span></div>
-          </div>
-        </div>
-        <div class="card signal-card blocked">
-          <div class="sig-header">
-            <span class="sig-rank">#4</span>
-            <span class="sig-symbol">HST</span>
-            <span class="badge badge-orange">CT</span>
-            
-          </div>
-          <div class="sig-details">
-            <div class="sig-detail"><span class="label">MS Stock</span><span class="value ms-val">+14.9</span></div>
-            <div class="sig-detail"><span class="label">MS SubInd</span><span class="value">+0.2</span></div>
-            <div class="sig-detail"><span class="label">ATR Dist</span><span class="value">1.5</span></div>
-            <div class="sig-detail"><span class="label">Sizing</span><span class="value">100%</span></div>
-            <div class="sig-detail"><span class="label">Cierre</span><span class="value">$20.14</span></div>
-            <div class="sig-detail"><span class="label">Stop</span><span class="value stop-val">$17.93</span></div>
-            <div class="sig-detail"><span class="label">Riesgo</span><span class="value risk-val">11.0%</span></div>
-            <div class="sig-detail"><span class="label">Sub-Ind</span><span class="value small">Hotel & Resort REITs</span></div>
-          </div>
-        </div>
-        <div class="card signal-card blocked">
-          <div class="sig-header">
-            <span class="sig-rank">#5</span>
-            <span class="sig-symbol">AVGO</span>
-            <span class="badge badge-orange">CT</span>
-            
-          </div>
-          <div class="sig-details">
-            <div class="sig-detail"><span class="label">MS Stock</span><span class="value ms-val">+14.6</span></div>
-            <div class="sig-detail"><span class="label">MS SubInd</span><span class="value">+12.9</span></div>
-            <div class="sig-detail"><span class="label">ATR Dist</span><span class="value">1.0</span></div>
-            <div class="sig-detail"><span class="label">Sizing</span><span class="value">100%</span></div>
-            <div class="sig-detail"><span class="label">Cierre</span><span class="value">$371.55</span></div>
-            <div class="sig-detail"><span class="label">Stop</span><span class="value stop-val">$328.10</span></div>
-            <div class="sig-detail"><span class="label">Riesgo</span><span class="value risk-val">11.7%</span></div>
-            <div class="sig-detail"><span class="label">Sub-Ind</span><span class="value small">Semiconductors</span></div>
-          </div>
-        </div>
-        <div class="card signal-card blocked">
-          <div class="sig-header">
-            <span class="sig-rank">#6</span>
-            <span class="sig-symbol">ANET</span>
-            <span class="badge badge-orange">CT</span>
-            
-          </div>
-          <div class="sig-details">
-            <div class="sig-detail"><span class="label">MS Stock</span><span class="value ms-val">+13.6</span></div>
-            <div class="sig-detail"><span class="label">MS SubInd</span><span class="value">+71.4</span></div>
-            <div class="sig-detail"><span class="label">ATR Dist</span><span class="value">0.9</span></div>
-            <div class="sig-detail"><span class="label">Sizing</span><span class="value">100%</span></div>
-            <div class="sig-detail"><span class="label">Cierre</span><span class="value">$147.35</span></div>
-            <div class="sig-detail"><span class="label">Stop</span><span class="value stop-val">$129.63</span></div>
-            <div class="sig-detail"><span class="label">Riesgo</span><span class="value risk-val">12.0%</span></div>
-            <div class="sig-detail"><span class="label">Sub-Ind</span><span class="value small">Communications Equipment</span></div>
-          </div>
-        </div>
-        <div class="card signal-card blocked">
-          <div class="sig-header">
-            <span class="sig-rank">#7</span>
-            <span class="sig-symbol">APH</span>
-            <span class="badge badge-orange">CT</span>
-            
-          </div>
-          <div class="sig-details">
-            <div class="sig-detail"><span class="label">MS Stock</span><span class="value ms-val">+12.8</span></div>
-            <div class="sig-detail"><span class="label">MS SubInd</span><span class="value">+57.3</span></div>
-            <div class="sig-detail"><span class="label">ATR Dist</span><span class="value">0.2</span></div>
-            <div class="sig-detail"><span class="label">Sizing</span><span class="value">100%</span></div>
-            <div class="sig-detail"><span class="label">Cierre</span><span class="value">$140.75</span></div>
-            <div class="sig-detail"><span class="label">Stop</span><span class="value stop-val">$133.64</span></div>
-            <div class="sig-detail"><span class="label">Riesgo</span><span class="value risk-val">5.1%</span></div>
-            <div class="sig-detail"><span class="label">Sub-Ind</span><span class="value small">Electronic Components</span></div>
-          </div>
-        </div>
-        <div class="card signal-card blocked">
-          <div class="sig-header">
-            <span class="sig-rank">#8</span>
-            <span class="sig-symbol">MS</span>
-            <span class="badge badge-green">FG</span>
-            
-          </div>
-          <div class="sig-details">
-            <div class="sig-detail"><span class="label">MS Stock</span><span class="value ms-val">+9.8</span></div>
-            <div class="sig-detail"><span class="label">MS SubInd</span><span class="value">+2.7</span></div>
-            <div class="sig-detail"><span class="label">ATR Dist</span><span class="value">0.5</span></div>
-            <div class="sig-detail"><span class="label">Sizing</span><span class="value">100%</span></div>
-            <div class="sig-detail"><span class="label">Cierre</span><span class="value">$177.64</span></div>
-            <div class="sig-detail"><span class="label">Stop</span><span class="value stop-val">$165.69</span></div>
-            <div class="sig-detail"><span class="label">Riesgo</span><span class="value risk-val">6.7%</span></div>
-            <div class="sig-detail"><span class="label">Sub-Ind</span><span class="value small">Investment Banking & Brokera</span></div>
-          </div>
-        </div>
-        <div class="card signal-card blocked">
-          <div class="sig-header">
-            <span class="sig-rank">#9</span>
-            <span class="sig-symbol">HCA</span>
-            <span class="badge badge-orange">CT</span>
-            
-          </div>
-          <div class="sig-details">
-            <div class="sig-detail"><span class="label">MS Stock</span><span class="value ms-val">+8.7</span></div>
-            <div class="sig-detail"><span class="label">MS SubInd</span><span class="value">+4.1</span></div>
-            <div class="sig-detail"><span class="label">ATR Dist</span><span class="value">0.1</span></div>
-            <div class="sig-detail"><span class="label">Sizing</span><span class="value">100%</span></div>
-            <div class="sig-detail"><span class="label">Cierre</span><span class="value">$495.47</span></div>
-            <div class="sig-detail"><span class="label">Stop</span><span class="value stop-val">$478.66</span></div>
-            <div class="sig-detail"><span class="label">Riesgo</span><span class="value risk-val">3.4%</span></div>
-            <div class="sig-detail"><span class="label">Sub-Ind</span><span class="value small">Health Care Facilities</span></div>
-          </div>
-        </div>
-        <div class="card signal-card blocked">
-          <div class="sig-header">
-            <span class="sig-rank">#10</span>
-            <span class="sig-symbol">AMGN</span>
-            <span class="badge badge-orange">CT</span>
-            
-          </div>
-          <div class="sig-details">
-            <div class="sig-detail"><span class="label">MS Stock</span><span class="value ms-val">+7.8</span></div>
-            <div class="sig-detail"><span class="label">MS SubInd</span><span class="value">+3.1</span></div>
-            <div class="sig-detail"><span class="label">ATR Dist</span><span class="value">0.3</span></div>
-            <div class="sig-detail"><span class="label">Sizing</span><span class="value">100%</span></div>
-            <div class="sig-detail"><span class="label">Cierre</span><span class="value">$351.02</span></div>
-            <div class="sig-detail"><span class="label">Stop</span><span class="value stop-val">$335.19</span></div>
-            <div class="sig-detail"><span class="label">Riesgo</span><span class="value risk-val">4.5%</span></div>
-            <div class="sig-detail"><span class="label">Sub-Ind</span><span class="value small">Biotechnology</span></div>
-          </div>
-        </div>
-        <div class="card signal-card blocked">
-          <div class="sig-header">
-            <span class="sig-rank">#11</span>
-            <span class="sig-symbol">IBKR</span>
-            <span class="badge badge-orange">CT</span>
-            
-          </div>
-          <div class="sig-details">
-            <div class="sig-detail"><span class="label">MS Stock</span><span class="value ms-val">+7.2</span></div>
-            <div class="sig-detail"><span class="label">MS SubInd</span><span class="value">+2.7</span></div>
-            <div class="sig-detail"><span class="label">ATR Dist</span><span class="value">0.3</span></div>
-            <div class="sig-detail"><span class="label">Sizing</span><span class="value">100%</span></div>
-            <div class="sig-detail"><span class="label">Cierre</span><span class="value">$71.21</span></div>
-            <div class="sig-detail"><span class="label">Stop</span><span class="value stop-val">$67.52</span></div>
-            <div class="sig-detail"><span class="label">Riesgo</span><span class="value risk-val">5.2%</span></div>
-            <div class="sig-detail"><span class="label">Sub-Ind</span><span class="value small">Investment Banking & Brokera</span></div>
-          </div>
-        </div>
-        <div class="card signal-card blocked">
-          <div class="sig-header">
-            <span class="sig-rank">#12</span>
-            <span class="sig-symbol">EBAY</span>
-            <span class="badge badge-green">FG</span>
-            
-          </div>
-          <div class="sig-details">
-            <div class="sig-detail"><span class="label">MS Stock</span><span class="value ms-val">+6.8</span></div>
-            <div class="sig-detail"><span class="label">MS SubInd</span><span class="value">+3.3</span></div>
-            <div class="sig-detail"><span class="label">ATR Dist</span><span class="value">0.8</span></div>
-            <div class="sig-detail"><span class="label">Sizing</span><span class="value">100%</span></div>
-            <div class="sig-detail"><span class="label">Cierre</span><span class="value">$95.40</span></div>
-            <div class="sig-detail"><span class="label">Stop</span><span class="value stop-val">$86.63</span></div>
-            <div class="sig-detail"><span class="label">Riesgo</span><span class="value risk-val">9.2%</span></div>
-            <div class="sig-detail"><span class="label">Sub-Ind</span><span class="value small">Broadline Retail</span></div>
-          </div>
-        </div>
-        <div class="card signal-card blocked">
-          <div class="sig-header">
-            <span class="sig-rank">#13</span>
-            <span class="sig-symbol">TFC</span>
-            <span class="badge badge-orange">CT</span>
-            
-          </div>
-          <div class="sig-details">
-            <div class="sig-detail"><span class="label">MS Stock</span><span class="value ms-val">+5.8</span></div>
-            <div class="sig-detail"><span class="label">MS SubInd</span><span class="value">+5.2</span></div>
-            <div class="sig-detail"><span class="label">ATR Dist</span><span class="value">0.5</span></div>
-            <div class="sig-detail"><span class="label">Sizing</span><span class="value">100%</span></div>
-            <div class="sig-detail"><span class="label">Cierre</span><span class="value">$49.60</span></div>
-            <div class="sig-detail"><span class="label">Stop</span><span class="value stop-val">$46.62</span></div>
-            <div class="sig-detail"><span class="label">Riesgo</span><span class="value risk-val">6.0%</span></div>
-            <div class="sig-detail"><span class="label">Sub-Ind</span><span class="value small">Diversified Banks</span></div>
-          </div>
-        </div>
-        <div class="card signal-card blocked">
-          <div class="sig-header">
-            <span class="sig-rank">#14</span>
-            <span class="sig-symbol">MCHP</span>
-            <span class="badge badge-orange">CT</span>
-            
-          </div>
-          <div class="sig-details">
-            <div class="sig-detail"><span class="label">MS Stock</span><span class="value ms-val">+5.7</span></div>
-            <div class="sig-detail"><span class="label">MS SubInd</span><span class="value">+12.9</span></div>
-            <div class="sig-detail"><span class="label">ATR Dist</span><span class="value">0.5</span></div>
-            <div class="sig-detail"><span class="label">Sizing</span><span class="value">100%</span></div>
-            <div class="sig-detail"><span class="label">Cierre</span><span class="value">$71.56</span></div>
-            <div class="sig-detail"><span class="label">Stop</span><span class="value stop-val">$65.80</span></div>
-            <div class="sig-detail"><span class="label">Riesgo</span><span class="value risk-val">8.1%</span></div>
-            <div class="sig-detail"><span class="label">Sub-Ind</span><span class="value small">Semiconductors</span></div>
-          </div>
-        </div>
-        <div class="card signal-card blocked">
-          <div class="sig-header">
-            <span class="sig-rank">#15</span>
-            <span class="sig-symbol">NVDA</span>
-            <span class="badge badge-orange">CT</span>
-            
-          </div>
-          <div class="sig-details">
-            <div class="sig-detail"><span class="label">MS Stock</span><span class="value ms-val">+5.0</span></div>
-            <div class="sig-detail"><span class="label">MS SubInd</span><span class="value">+12.9</span></div>
-            <div class="sig-detail"><span class="label">ATR Dist</span><span class="value">0.4</span></div>
-            <div class="sig-detail"><span class="label">Sizing</span><span class="value">100%</span></div>
-            <div class="sig-detail"><span class="label">Cierre</span><span class="value">$188.63</span></div>
-            <div class="sig-detail"><span class="label">Stop</span><span class="value stop-val">$178.19</span></div>
-            <div class="sig-detail"><span class="label">Riesgo</span><span class="value risk-val">5.5%</span></div>
-            <div class="sig-detail"><span class="label">Sub-Ind</span><span class="value small">Semiconductors</span></div>
-          </div>
-        </div>
-        <div class="card signal-card blocked">
-          <div class="sig-header">
-            <span class="sig-rank">#16</span>
-            <span class="sig-symbol">RF</span>
-            <span class="badge badge-orange">CT</span>
-            
-          </div>
-          <div class="sig-details">
-            <div class="sig-detail"><span class="label">MS Stock</span><span class="value ms-val">+4.8</span></div>
-            <div class="sig-detail"><span class="label">MS SubInd</span><span class="value">+7.3</span></div>
-            <div class="sig-detail"><span class="label">ATR Dist</span><span class="value">0.3</span></div>
-            <div class="sig-detail"><span class="label">Sizing</span><span class="value">100%</span></div>
-            <div class="sig-detail"><span class="label">Cierre</span><span class="value">$27.50</span></div>
-            <div class="sig-detail"><span class="label">Stop</span><span class="value stop-val">$26.11</span></div>
-            <div class="sig-detail"><span class="label">Riesgo</span><span class="value risk-val">5.1%</span></div>
-            <div class="sig-detail"><span class="label">Sub-Ind</span><span class="value small">Regional Banks</span></div>
-          </div>
-        </div>
-        <div class="card signal-card blocked">
-          <div class="sig-header">
-            <span class="sig-rank">#17</span>
-            <span class="sig-symbol">EMR</span>
-            <span class="badge badge-orange">CT</span>
-            
-          </div>
-          <div class="sig-details">
-            <div class="sig-detail"><span class="label">MS Stock</span><span class="value ms-val">+2.9</span></div>
-            <div class="sig-detail"><span class="label">MS SubInd</span><span class="value">+33.7</span></div>
-            <div class="sig-detail"><span class="label">ATR Dist</span><span class="value">0.4</span></div>
-            <div class="sig-detail"><span class="label">Sizing</span><span class="value">100%</span></div>
-            <div class="sig-detail"><span class="label">Cierre</span><span class="value">$143.77</span></div>
-            <div class="sig-detail"><span class="label">Stop</span><span class="value stop-val">$135.20</span></div>
-            <div class="sig-detail"><span class="label">Riesgo</span><span class="value risk-val">6.0%</span></div>
-            <div class="sig-detail"><span class="label">Sub-Ind</span><span class="value small">Electrical Components & Equi</span></div>
-          </div>
-        </div>
-        <div class="card signal-card blocked">
-          <div class="sig-header">
-            <span class="sig-rank">#18</span>
-            <span class="sig-symbol">AMZN</span>
-            <span class="badge badge-green">FG</span>
-            
-          </div>
-          <div class="sig-details">
-            <div class="sig-detail"><span class="label">MS Stock</span><span class="value ms-val">+2.4</span></div>
-            <div class="sig-detail"><span class="label">MS SubInd</span><span class="value">+3.3</span></div>
-            <div class="sig-detail"><span class="label">ATR Dist</span><span class="value">1.0</span></div>
-            <div class="sig-detail"><span class="label">Sizing</span><span class="value">100%</span></div>
-            <div class="sig-detail"><span class="label">Cierre</span><span class="value">$238.38</span></div>
-            <div class="sig-detail"><span class="label">Stop</span><span class="value stop-val">$215.29</span></div>
-            <div class="sig-detail"><span class="label">Riesgo</span><span class="value risk-val">9.7%</span></div>
-            <div class="sig-detail"><span class="label">Sub-Ind</span><span class="value small">Broadline Retail</span></div>
-          </div>
-        </div>
-        <div class="card signal-card blocked">
-          <div class="sig-header">
-            <span class="sig-rank">#19</span>
-            <span class="sig-symbol">UPS</span>
-            <span class="badge badge-orange">CT</span>
-            
-          </div>
-          <div class="sig-details">
-            <div class="sig-detail"><span class="label">MS Stock</span><span class="value ms-val">+1.9</span></div>
-            <div class="sig-detail"><span class="label">MS SubInd</span><span class="value">+14.6</span></div>
-            <div class="sig-detail"><span class="label">ATR Dist</span><span class="value">0.0</span></div>
-            <div class="sig-detail"><span class="label">Sizing</span><span class="value">100%</span></div>
-            <div class="sig-detail"><span class="label">Cierre</span><span class="value">$101.70</span></div>
-            <div class="sig-detail"><span class="label">Stop</span><span class="value stop-val">$98.58</span></div>
-            <div class="sig-detail"><span class="label">Riesgo</span><span class="value risk-val">3.1%</span></div>
-            <div class="sig-detail"><span class="label">Sub-Ind</span><span class="value small">Air Freight & Logistics</span></div>
-          </div>
-        </div>
-        <div class="card signal-card blocked">
-          <div class="sig-header">
-            <span class="sig-rank">#20</span>
-            <span class="sig-symbol">ITW</span>
-            <span class="badge badge-orange">CT</span>
-            
-          </div>
-          <div class="sig-details">
-            <div class="sig-detail"><span class="label">MS Stock</span><span class="value ms-val">+1.2</span></div>
-            <div class="sig-detail"><span class="label">MS SubInd</span><span class="value">+5.6</span></div>
-            <div class="sig-detail"><span class="label">ATR Dist</span><span class="value">0.5</span></div>
-            <div class="sig-detail"><span class="label">Sizing</span><span class="value">100%</span></div>
-            <div class="sig-detail"><span class="label">Cierre</span><span class="value">$270.52</span></div>
-            <div class="sig-detail"><span class="label">Stop</span><span class="value stop-val">$255.40</span></div>
-            <div class="sig-detail"><span class="label">Riesgo</span><span class="value risk-val">5.6%</span></div>
-            <div class="sig-detail"><span class="label">Sub-Ind</span><span class="value small">Industrial Machinery & Suppl</span></div>
-          </div>
-        </div>
-        <div class="card signal-card blocked">
-          <div class="sig-header">
-            <span class="sig-rank">#21</span>
-            <span class="sig-symbol">STZ</span>
-            <span class="badge badge-green">FG</span>
-            
-          </div>
-          <div class="sig-details">
-            <div class="sig-detail"><span class="label">MS Stock</span><span class="value ms-val">+1.1</span></div>
-            <div class="sig-detail"><span class="label">MS SubInd</span><span class="value">+0.4</span></div>
-            <div class="sig-detail"><span class="label">ATR Dist</span><span class="value">1.5</span></div>
-            <div class="sig-detail"><span class="label">Sizing</span><span class="value">100%</span></div>
-            <div class="sig-detail"><span class="label">Cierre</span><span class="value">$166.15</span></div>
-            <div class="sig-detail"><span class="label">Stop</span><span class="value stop-val">$145.56</span></div>
-            <div class="sig-detail"><span class="label">Riesgo</span><span class="value risk-val">12.4%</span></div>
-            <div class="sig-detail"><span class="label">Sub-Ind</span><span class="value small">Distillers & Vintners</span></div>
-          </div>
-        </div>
-        <div class="card signal-card blocked">
-          <div class="sig-header">
-            <span class="sig-rank">#22</span>
-            <span class="sig-symbol">ES</span>
-            <span class="badge badge-orange">CT</span>
-            
-          </div>
-          <div class="sig-details">
-            <div class="sig-detail"><span class="label">MS Stock</span><span class="value ms-val">+0.7</span></div>
-            <div class="sig-detail"><span class="label">MS SubInd</span><span class="value">+0.1</span></div>
-            <div class="sig-detail"><span class="label">ATR Dist</span><span class="value">0.1</span></div>
-            <div class="sig-detail"><span class="label">Sizing</span><span class="value">100%</span></div>
-            <div class="sig-detail"><span class="label">Cierre</span><span class="value">$69.97</span></div>
-            <div class="sig-detail"><span class="label">Stop</span><span class="value stop-val">$67.43</span></div>
-            <div class="sig-detail"><span class="label">Riesgo</span><span class="value risk-val">3.6%</span></div>
-            <div class="sig-detail"><span class="label">Sub-Ind</span><span class="value small">Electric Utilities</span></div>
-          </div>
-        </div>
-        <div class="card signal-card blocked">
-          <div class="sig-header">
-            <span class="sig-rank">#23</span>
-            <span class="sig-symbol">NRG</span>
-            <span class="badge badge-green">FG</span>
-            
-          </div>
-          <div class="sig-details">
-            <div class="sig-detail"><span class="label">MS Stock</span><span class="value ms-val">+0.3</span></div>
-            <div class="sig-detail"><span class="label">MS SubInd</span><span class="value">+1.1</span></div>
-            <div class="sig-detail"><span class="label">ATR Dist</span><span class="value">0.3</span></div>
-            <div class="sig-detail"><span class="label">Sizing</span><span class="value">100%</span></div>
-            <div class="sig-detail"><span class="label">Cierre</span><span class="value">$164.07</span></div>
-            <div class="sig-detail"><span class="label">Stop</span><span class="value stop-val">$153.92</span></div>
-            <div class="sig-detail"><span class="label">Riesgo</span><span class="value risk-val">6.2%</span></div>
-            <div class="sig-detail"><span class="label">Sub-Ind</span><span class="value small">Independent Power Producers </span></div>
-          </div>
-        </div>
-  </div>
+  /* -----------------------------------------------------------
+     Helpers de formato
+     ----------------------------------------------------------- */
+  const fmtPrice = (v) => {
+    if (v == null || isNaN(v)) return "—";
+    return v.toFixed(2);
+  };
+  const fmtPct = (v, withSign = true) => {
+    if (v == null || isNaN(v)) return "—";
+    const sign = withSign && v > 0 ? "+" : "";
+    return `${sign}${v.toFixed(2)}%`;
+  };
+  const fmtR = (v) => {
+    if (v == null || isNaN(v)) return "—";
+    const sign = v > 0 ? "+" : "";
+    return `${sign}${v.toFixed(2)}R`;
+  };
+  const fmtMS = (v) => {
+    if (v == null || isNaN(v)) return "—";
+    const sign = v > 0 ? "+" : "";
+    return `${sign}${v.toFixed(2)}`;
+  };
+  const fmtMoney = (v) => {
+    if (v == null || isNaN(v)) return "—";
+    return new Intl.NumberFormat("es-ES", {
+      style: "currency", currency: "USD", maximumFractionDigits: 0,
+    }).format(v);
+  };
+  const colorClassR = (v) => {
+    if (v == null || isNaN(v)) return "";
+    if (v > 0) return "green";
+    if (v < 0) return "red";
+    return "";
+  };
 
-  <!-- EQUITY CHART -->
-  <div class="section">
-    <div class="section-title">Curva de Equity (Backtest 2016-01-05 - 2026-04-07)</div>
-    <div class="chart-container">
-      <svg viewBox="0 0 800 220" preserveAspectRatio="none">
-        <defs>
-          <linearGradient id="eqGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stop-color="#3b82f6" stop-opacity="0.3"/>
-            <stop offset="100%" stop-color="#3b82f6" stop-opacity="0.02"/>
-          </linearGradient>
-        </defs>
-        <polygon points="0,200 0.0,197.8 6.0,197.8 12.0,197.8 18.0,194.5 24.1,193.7 30.1,191.9 36.1,193.5 42.1,189.6 48.1,189.8 54.1,190.8 60.2,190.8 66.2,191.5 72.2,190.9 78.2,191.1 84.2,190.6 90.2,190.7 96.2,191.3 102.3,191.4 108.3,191.1 114.3,189.4 120.3,189.4 126.3,190.1 132.3,188.8 138.3,188.0 144.4,187.0 150.4,185.6 156.4,184.2 162.4,186.8 168.4,184.5 174.4,187.0 180.5,186.5 186.5,186.2 192.5,186.7 198.5,185.8 204.5,185.6 210.5,184.3 216.5,188.1 222.6,186.9 228.6,187.4 234.6,188.9 240.6,187.7 246.6,186.4 252.6,185.3 258.6,185.0 264.7,185.4 270.7,182.6 276.7,183.1 282.7,183.7 288.7,183.1 294.7,184.3 300.8,181.3 306.8,179.2 312.8,177.1 318.8,177.1 324.8,178.1 330.8,182.0 336.8,181.7 342.9,181.8 348.9,181.7 354.9,180.3 360.9,176.2 366.9,175.0 372.9,169.8 378.9,171.0 385.0,167.9 391.0,165.6 397.0,165.4 403.0,165.8 409.0,169.9 415.0,165.2 421.1,165.8 427.1,164.8 433.1,163.4 439.1,158.7 445.1,158.3 451.1,163.4 457.1,161.4 463.2,165.1 469.2,162.0 475.2,165.9 481.2,165.7 487.2,165.0 493.2,165.0 499.2,165.5 505.3,166.0 511.3,166.0 517.3,166.0 523.3,166.0 529.3,166.0 535.3,166.0 541.4,166.0 547.4,166.0 553.4,166.3 559.4,163.5 565.4,160.0 571.4,158.9 577.4,154.0 583.5,147.5 589.5,144.8 595.5,148.1 601.5,146.1 607.5,146.5 613.5,146.8 619.5,144.0 625.6,138.7 631.6,133.1 637.6,125.7 643.6,120.0 649.6,127.2 655.6,123.1 661.7,113.7 667.7,110.9 673.7,125.2 679.7,123.9 685.7,112.3 691.7,111.8 697.7,84.2 703.8,86.4 709.8,83.4 715.8,75.8 721.8,91.4 727.8,94.7 733.8,90.6 739.8,87.9 745.9,75.0 751.9,59.5 757.9,56.4 763.9,46.3 769.9,43.1 775.9,43.2 782.0,38.2 788.0,27.8 794.0,11.5 800.0,13.7 800,200" fill="url(#eqGrad)"/>
-        <polyline points="0.0,197.8 6.0,197.8 12.0,197.8 18.0,194.5 24.1,193.7 30.1,191.9 36.1,193.5 42.1,189.6 48.1,189.8 54.1,190.8 60.2,190.8 66.2,191.5 72.2,190.9 78.2,191.1 84.2,190.6 90.2,190.7 96.2,191.3 102.3,191.4 108.3,191.1 114.3,189.4 120.3,189.4 126.3,190.1 132.3,188.8 138.3,188.0 144.4,187.0 150.4,185.6 156.4,184.2 162.4,186.8 168.4,184.5 174.4,187.0 180.5,186.5 186.5,186.2 192.5,186.7 198.5,185.8 204.5,185.6 210.5,184.3 216.5,188.1 222.6,186.9 228.6,187.4 234.6,188.9 240.6,187.7 246.6,186.4 252.6,185.3 258.6,185.0 264.7,185.4 270.7,182.6 276.7,183.1 282.7,183.7 288.7,183.1 294.7,184.3 300.8,181.3 306.8,179.2 312.8,177.1 318.8,177.1 324.8,178.1 330.8,182.0 336.8,181.7 342.9,181.8 348.9,181.7 354.9,180.3 360.9,176.2 366.9,175.0 372.9,169.8 378.9,171.0 385.0,167.9 391.0,165.6 397.0,165.4 403.0,165.8 409.0,169.9 415.0,165.2 421.1,165.8 427.1,164.8 433.1,163.4 439.1,158.7 445.1,158.3 451.1,163.4 457.1,161.4 463.2,165.1 469.2,162.0 475.2,165.9 481.2,165.7 487.2,165.0 493.2,165.0 499.2,165.5 505.3,166.0 511.3,166.0 517.3,166.0 523.3,166.0 529.3,166.0 535.3,166.0 541.4,166.0 547.4,166.0 553.4,166.3 559.4,163.5 565.4,160.0 571.4,158.9 577.4,154.0 583.5,147.5 589.5,144.8 595.5,148.1 601.5,146.1 607.5,146.5 613.5,146.8 619.5,144.0 625.6,138.7 631.6,133.1 637.6,125.7 643.6,120.0 649.6,127.2 655.6,123.1 661.7,113.7 667.7,110.9 673.7,125.2 679.7,123.9 685.7,112.3 691.7,111.8 697.7,84.2 703.8,86.4 709.8,83.4 715.8,75.8 721.8,91.4 727.8,94.7 733.8,90.6 739.8,87.9 745.9,75.0 751.9,59.5 757.9,56.4 763.9,46.3 769.9,43.1 775.9,43.2 782.0,38.2 788.0,27.8 794.0,11.5 800.0,13.7" fill="none" stroke="#3b82f6" stroke-width="2"/>
-        <text x="5" y="15" fill="#94a3b8" font-size="11">$552,034</text>
-        <text x="5" y="198" fill="#94a3b8" font-size="11">$95,000</text>
-      </svg>
-    </div>
-  </div>
+  const timeAgo = (iso) => {
+    if (!iso) return "desconocido";
+    const then = new Date(iso);
+    if (isNaN(then.getTime())) return "desconocido";
+    const diffSec = Math.floor((Date.now() - then.getTime()) / 1000);
+    if (diffSec < 60)    return "hace segundos";
+    if (diffSec < 3600)  return `hace ${Math.floor(diffSec/60)} min`;
+    if (diffSec < 86400) return `hace ${Math.floor(diffSec/3600)} h`;
+    const days = Math.floor(diffSec/86400);
+    return days === 1 ? "hace 1 día" : `hace ${days} días`;
+  };
 
-  <!-- BACKTEST STATS -->
-  <div class="section">
-    <div class="section-title">Estadisticas Backtest</div>
-    <div class="bt-grid">
-      <div class="bt-item"><span class="bt-label">CAGR</span><span class="bt-value" style="color:var(--green)">+18.0%</span></div>
-      <div class="bt-item"><span class="bt-label">Max Drawdown</span><span class="bt-value" style="color:var(--red)">-17.8%</span></div>
-      <div class="bt-item"><span class="bt-label">Sharpe</span><span class="bt-value">1.30</span></div>
-      <div class="bt-item"><span class="bt-label">Calmar</span><span class="bt-value">1.01</span></div>
-      <div class="bt-item"><span class="bt-label">Profit Factor</span><span class="bt-value">3.4</span></div>
-      <div class="bt-item"><span class="bt-label">Win Rate</span><span class="bt-value">53%</span></div>
-      <div class="bt-item"><span class="bt-label">Avg Win</span><span class="bt-value" style="color:var(--green)">+25.3%</span></div>
-      <div class="bt-item"><span class="bt-label">Avg Loss</span><span class="bt-value" style="color:var(--red)">-8.4%</span></div>
-      <div class="bt-item"><span class="bt-label">Trades</span><span class="bt-value">157</span></div>
-      <div class="bt-item"><span class="bt-label">SPY CAGR</span><span class="bt-value">+14.9%</span></div>
-      <div class="bt-item"><span class="bt-label">Alpha</span><span class="bt-value" style="color:var(--green)">+3.1%</span></div>
-      <div class="bt-item"><span class="bt-label">Capital Final</span><span class="bt-value">$548,554</span></div>
-    </div>
-  </div>
+  const fmtDate = (iso) => {
+    if (!iso) return "—";
+    try {
+      return new Date(iso).toLocaleDateString("es-ES", {
+        day: "2-digit", month: "short", year: "numeric",
+      });
+    } catch { return iso; }
+  };
 
-  <!-- RECENT WEEKS -->
-  <div class="section">
-    <div class="section-title">Ultimas 4 Semanas</div>
-    <div class="card" style="overflow-x:auto;">
-      <table>
-        <thead>
-          <tr><th>Fecha</th><th>MT</th><th>Equity</th><th>Pos</th>
-              <th class="hide-mobile">Entradas</th><th class="hide-mobile">Salidas</th>
-              <th class="hide-mobile">Parciales</th></tr>
-        </thead>
-        <tbody>
-        <tr>
-          <td>2026-04-07</td>
-          <td><span class="dot dot-red"></span></td>
-          <td>$548,554</td>
-          <td>7</td>
-          <td class="hide-mobile">-</td>
-          <td class="hide-mobile">-</td>
-          <td class="hide-mobile">WDC(3R (25%))</td>
-        </tr>
-        <tr>
-          <td>2026-03-31</td>
-          <td><span class="dot dot-red"></span></td>
-          <td>$527,115</td>
-          <td>7</td>
-          <td class="hide-mobile">-</td>
-          <td class="hide-mobile">-</td>
-          <td class="hide-mobile">-</td>
-        </tr>
-        <tr>
-          <td>2026-03-24</td>
-          <td><span class="dot dot-red"></span></td>
-          <td>$500,932</td>
-          <td>7</td>
-          <td class="hide-mobile">-</td>
-          <td class="hide-mobile">-</td>
-          <td class="hide-mobile">-</td>
-        </tr>
-        <tr>
-          <td>2026-03-17</td>
-          <td><span class="dot dot-red"></span></td>
-          <td>$520,720</td>
-          <td>7</td>
-          <td class="hide-mobile">-</td>
-          <td class="hide-mobile">-</td>
-          <td class="hide-mobile">-</td>
-        </tr></tbody>
-      </table>
-    </div>
-  </div>
+  const escapeHtml = (s) => String(s ?? "").replace(/[&<>"']/g, (c) =>
+    ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", "\"":"&quot;", "'":"&#39;" }[c])
+  );
 
-  <!-- METHOD INFO -->
-  <div class="section">
-    <div class="section-title">Reglas del Metodo</div>
-    <div class="card method-info">
-      <p><strong>5 Condiciones Core:</strong> C1 Price&gt;WMA30 | C2 WMA30 rising | C3 Momentum 17w&gt;0 | C4 Mansfield RS&gt;0 | C5 Sub-Industry MS&gt;0</p>
-      <p><strong>Sub-Industria:</strong> Mansfield RS del indice sintetico GICS Sub-Industry (127 grupos) vs SPY</p>
-      <p><strong>Entrada:</strong> Core=5 al cierre del viernes &rarr; Comprar al OPEN del lunes | FG + CT ordenadas por Mansfield RS</p>
-      <p><strong>ATR Sizing:</strong> 0-2.0 ATR = 100% | 2.0-4.0 ATR = 50% | &gt;4.0 = no entry</p>
-      <p><strong>Stop:</strong> WMA30 &times; 0.97 | Breakeven tras 2R</p>
-      <p><strong>Parciales:</strong> 2R = vender 25% | 3R = vender 25% | Runner = 50% con trailing stop</p>
-      <p><strong>Market Timing:</strong> NH-NL rising+&gt;MA50 AND QQQ&gt;WMA30 = VERDE | Rojo = no nuevas entradas</p>
-      <p><strong>Cartera:</strong> 10 posiciones equiponderadas S&P 500</p>
-    </div>
-  </div>
+  /* -----------------------------------------------------------
+     Renderers — devuelven HTML strings
+     ----------------------------------------------------------- */
 
-</div>
+  function renderHeader(data, status) {
+    const mt = data?.market_timing || {};
+    const isRojo = mt.status === "ROJO";
 
-<div class="footer">
-  Metodo Tendencia 2.0 | Backtest 2016-01-05&ndash;2026-04-07 |
-  CAGR +18.0% | Sharpe 1.30 | Calmar 1.01<br>
-  Datos: Yahoo Finance | Actualizado: 2026-04-12 11:26
-</div>
+    let statusPill;
+    switch ((status?.status || "ERROR").toUpperCase()) {
+      case "OK":
+        statusPill = `<span class="pill verde"><span class="dot"></span>Datos al día</span>`;
+        break;
+      case "EJECUTANDO":
+        statusPill = `<span class="pill blue pulse"><span class="dot"></span>Actualizando…</span>`;
+        break;
+      case "PENDIENTE":
+        statusPill = `<span class="pill amber"><span class="dot"></span>Actualización atrasada</span>`;
+        break;
+      case "ERROR":
+      default:
+        statusPill = `<span class="pill rojo"><span class="dot"></span>Error de actualización</span>`;
+    }
+
+    const mtPill = isRojo
+      ? `<span class="pill rojo"><span class="dot"></span>Market Timing · ROJO</span>`
+      : `<span class="pill verde"><span class="dot"></span>Market Timing · VERDE</span>`;
+
+    const subtitle = status?.last_run_at
+      ? `Última actualización: <strong>${escapeHtml(timeAgo(status.last_run_at))}</strong> · Datos del ${escapeHtml(fmtDate(data?.meta?.data_date))}`
+      : `Sin información de actualización`;
+
+    return `
+      <header class="app-header">
+        <div class="header-title">
+          <div>
+            <h1>Weinstein <span class="accent">·</span> Operativo</h1>
+            <div class="header-subtitle">${subtitle}</div>
+          </div>
+        </div>
+        <div class="header-pills">
+          ${statusPill}
+          ${mtPill}
+        </div>
+      </header>
+    `;
+  }
+
+  function renderUpdateBanner(status) {
+    const s = (status?.status || "ERROR").toUpperCase();
+    if (s === "OK") return "";
+
+    if (s === "EJECUTANDO") {
+      return `
+        <div class="banner blue">
+          <div class="banner-icon">⏳</div>
+          <div class="banner-body">
+            <div class="banner-title">Pipeline en ejecución</div>
+            <div class="banner-text">Los datos de esta página pueden estar desactualizados unos minutos.</div>
+          </div>
+        </div>`;
+    }
+    if (s === "PENDIENTE") {
+      return `
+        <div class="banner amber">
+          <div class="banner-icon">⚠️</div>
+          <div class="banner-body">
+            <div class="banner-title">Actualización atrasada</div>
+            <div class="banner-text">El pipeline debería haber corrido el ${escapeHtml(fmtDate(status?.next_run_at))}. Verifica GitHub Actions.</div>
+          </div>
+        </div>`;
+    }
+    // ERROR
+    const errs = (status?.errors || []).slice(0, 2).map(escapeHtml).join(" · ") || "Sin detalle";
+    const link = status?.log_url
+      ? ` <a href="${escapeHtml(status.log_url)}" target="_blank" rel="noopener">Ver log</a>`
+      : "";
+    return `
+      <div class="banner rojo">
+        <div class="banner-icon">🛑</div>
+        <div class="banner-body">
+          <div class="banner-title">Error en la última actualización</div>
+          <div class="banner-text">No te fíes de los datos. ${errs}.${link}</div>
+        </div>
+      </div>`;
+  }
+
+  function renderMTBanner(data) {
+    const mt = data?.market_timing || {};
+    if (mt.status !== "ROJO") return "";
+    return `
+      <div class="banner rojo">
+        <div class="banner-icon">🔴</div>
+        <div class="banner-body">
+          <div class="banner-title">Market Timing en ROJO — No se abren nuevas compras</div>
+          <div class="banner-text">
+            ${mt.nh_nl_ok ? "✓" : "✗"} NH-NL · ${mt.qqq_above_wma_ok ? "✓" : "✗"} QQQ &gt; WMA30.
+            Las ventas y stops sí se ejecutan con normalidad.
+          </div>
+        </div>
+      </div>`;
+  }
+
+  /* ----------------------- Acciones ----------------------- */
+  function renderActions(data) {
+    const a = data?.actions_this_week || {};
+    const stops    = a.stops || [];
+    const sells2r  = a.partials_2r || [];
+    const sells3r  = a.partials_3r || [];
+    const buysRaw  = a.buys || [];
+    const mtRojo   = data?.market_timing?.status === "ROJO";
+    const buys     = mtRojo ? [] : buysRaw;
+
+    const allEmpty = !stops.length && !sells2r.length && !sells3r.length && !buys.length;
+    const headerCount = stops.length + sells2r.length + sells3r.length + buys.length;
+
+    const headerBadge = headerCount > 0
+      ? `<span class="pill purple">${headerCount} ${headerCount === 1 ? "acción" : "acciones"}</span>`
+      : `<span class="pill muted">Sin acciones</span>`;
+
+    let body;
+    if (allEmpty) {
+      body = `
+        <div class="panel-empty">
+          <span class="empty-icon">✓</span>
+          <div><strong>Nada que hacer esta semana.</strong></div>
+          <div>No hay stops, parciales ni nuevas compras pendientes.</div>
+        </div>`;
+    } else {
+      body = `
+        ${stops.map(renderStop).join("")}
+        ${sells2r.map((s) => renderPartial(s, "2R")).join("")}
+        ${sells3r.map((s) => renderPartial(s, "3R")).join("")}
+        ${buys.map(renderBuy).join("")}
+        ${mtRojo && buysRaw.length > 0 ? `
+          <div class="row">
+            <div class="row-note urgent">
+              ${buysRaw.length} ${buysRaw.length === 1 ? "compra bloqueada" : "compras bloqueadas"} por Market Timing rojo. Se reanudarán cuando vuelva a verde.
+            </div>
+          </div>` : ""}
+      `;
+    }
+
+    return `
+      <section class="panel">
+        <div class="panel-header">
+          <h2>Acciones a tomar — lunes apertura</h2>
+          ${headerBadge}
+        </div>
+        <div class="panel-body">${body}</div>
+      </section>
+    `;
+  }
+
+  function renderStop(s) {
+    return `
+      <div class="row action urgent">
+        <div class="row-head">
+          <div class="row-symbol">
+            <span class="sym">${escapeHtml(s.symbol)}</span>
+            <span class="name">${escapeHtml(s.name || "")}</span>
+          </div>
+          <span class="pill rojo"><span class="dot"></span>STOP · Salir 100%</span>
+        </div>
+        <div class="row-grid">
+          <div class="kpi"><div class="kpi-label">Precio</div><div class="kpi-value">$${fmtPrice(s.current_price)}</div></div>
+          <div class="kpi"><div class="kpi-label">Stop</div><div class="kpi-value red">$${fmtPrice(s.stop_price)}</div></div>
+        </div>
+        <div class="row-note urgent">${escapeHtml(s.rationale || "Cierre semanal bajo stop. Salir 100%.")}</div>
+      </div>`;
+  }
+
+  function renderPartial(s, label) {
+    const level = s.level_2r ?? s.level_3r;
+    const pct = s.shares_to_sell_pct ?? 25;
+    return `
+      <div class="row action warn">
+        <div class="row-head">
+          <div class="row-symbol">
+            <span class="sym">${escapeHtml(s.symbol)}</span>
+            <span class="name">${escapeHtml(s.name || "")}</span>
+          </div>
+          <span class="pill amber"><span class="dot"></span>VENDER ${pct}% · ${label}</span>
+        </div>
+        <div class="row-grid">
+          <div class="kpi"><div class="kpi-label">Precio</div><div class="kpi-value">$${fmtPrice(s.current_price)}</div></div>
+          <div class="kpi"><div class="kpi-label">Nivel ${label}</div><div class="kpi-value green">$${fmtPrice(level)}</div></div>
+        </div>
+        <div class="row-note warn">${escapeHtml(s.rationale || `Vender ${pct}% al cruzar ${label}.`)}</div>
+      </div>`;
+  }
+
+  function renderBuy(s) {
+    const tipoPill = s.type === "FIRST_GEN"
+      ? `<span class="pill purple">FIRST_GEN</span>`
+      : `<span class="pill blue">CONTINUATION</span>`;
+    const sizingPill = `<span class="pill muted">Tamaño ${escapeHtml(s.sizing || "100%")}</span>`;
+
+    return `
+      <div class="row action success">
+        <div class="row-head">
+          <div class="row-symbol">
+            <span class="sym">${escapeHtml(s.symbol)}</span>
+            <span class="name">${escapeHtml(s.name || "")}</span>
+          </div>
+          <div class="row-meta">${tipoPill}${sizingPill}</div>
+        </div>
+        <div class="row-grid">
+          <div class="kpi"><div class="kpi-label">Entrada</div><div class="kpi-value">$${fmtPrice(s.entry_price)}</div></div>
+          <div class="kpi"><div class="kpi-label">Stop</div><div class="kpi-value red">$${fmtPrice(s.stop_price)}</div></div>
+          <div class="kpi"><div class="kpi-label">2R</div><div class="kpi-value green">$${fmtPrice(s.level_2r)}</div></div>
+          <div class="kpi"><div class="kpi-label">3R</div><div class="kpi-value green">$${fmtPrice(s.level_3r)}</div></div>
+        </div>
+        ${s.rationale ? `<div class="row-note success">${escapeHtml(s.rationale)}</div>` : ""}
+      </div>`;
+  }
+
+  /* ----------------------- Cartera ----------------------- */
+  function renderPortfolio(data) {
+    const p = data?.portfolio || {};
+    const positions = p.positions || [];
+    const nAlerts = positions.filter((x) => x.status === "STOP_ALERT").length;
+
+    const headerBadge = nAlerts > 0
+      ? `<span class="pill rojo">${nAlerts} en alerta</span>`
+      : `<span class="pill muted">${positions.length} / ${p.n_max_positions ?? "—"} posiciones</span>`;
+
+    const stats = `
+      <div class="stats">
+        <div class="stat">
+          <div class="stat-label">Capital</div>
+          <div class="stat-value">${escapeHtml(fmtMoney(p.capital_total))}</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Posiciones</div>
+          <div class="stat-value">${p.n_positions ?? 0} / ${p.n_max_positions ?? "—"}</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Exposición</div>
+          <div class="stat-value ${(p.exposure_pct ?? 0) >= 80 ? "amber" : ""}">${(p.exposure_pct ?? 0).toFixed(0)}%</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Cash</div>
+          <div class="stat-value">${(p.cash_pct ?? 0).toFixed(0)}%</div>
+        </div>
+      </div>`;
+
+    const body = !positions.length
+      ? `<div class="panel-empty">
+           <span class="empty-icon">💼</span>
+           <div><strong>Cartera vacía.</strong></div>
+           <div>Cuando entres en alguna posición aparecerá aquí.</div>
+         </div>`
+      : positions.map(renderPosition).join("");
+
+    return `
+      <section class="panel">
+        <div class="panel-header">
+          <h2>Cartera actual</h2>
+          ${headerBadge}
+        </div>
+        ${stats}
+        <div class="panel-body">${body}</div>
+      </section>
+    `;
+  }
+
+  function renderPosition(pos) {
+    const statusMap = {
+      HOLD:       { cls: "muted", text: "HOLD" },
+      RUNNER:     { cls: "verde", text: "RUNNER" },
+      STOP_ALERT: { cls: "rojo",  text: "STOP ALERT" },
+      SELL_2R:    { cls: "amber", text: "VENDER 25% · 2R" },
+      SELL_3R:    { cls: "amber", text: "VENDER 25% · 3R" },
+    };
+    const stat = statusMap[pos.status] || statusMap.HOLD;
+    const pnlCls = colorClassR(pos.pnl_r);
+    const stopDistCls = (pos.stop_distance_pct ?? 0) > -3 ? "amber" : "";
+
+    const noteCls =
+      pos.status === "STOP_ALERT" ? "urgent" :
+      (pos.status === "SELL_2R" || pos.status === "SELL_3R") ? "warn" :
+      "";
+    const note = pos.note
+      ? `<div class="row-note ${noteCls}">${escapeHtml(pos.note)}</div>`
+      : "";
+
+    return `
+      <div class="row">
+        <div class="row-head">
+          <div class="row-symbol">
+            <span class="sym">${escapeHtml(pos.symbol)}</span>
+            <span class="name">${escapeHtml(pos.name || pos.subindustry || "")}</span>
+          </div>
+          <span class="pill ${stat.cls}"><span class="dot"></span>${stat.text}</span>
+        </div>
+        <div class="row-grid">
+          <div class="kpi"><div class="kpi-label">Precio</div><div class="kpi-value">$${fmtPrice(pos.current_price)}</div></div>
+          <div class="kpi"><div class="kpi-label">P&amp;L</div><div class="kpi-value ${pnlCls}">${fmtPct(pos.pnl_pct)} · ${fmtR(pos.pnl_r)}</div></div>
+          <div class="kpi"><div class="kpi-label">Entrada</div><div class="kpi-value">$${fmtPrice(pos.entry_price)}</div></div>
+          <div class="kpi"><div class="kpi-label">Semanas</div><div class="kpi-value">${pos.weeks_held ?? "—"}</div></div>
+          <div class="kpi"><div class="kpi-label">Stop</div><div class="kpi-value red">$${fmtPrice(pos.stop_price)}</div></div>
+          <div class="kpi"><div class="kpi-label">Dist. stop</div><div class="kpi-value ${stopDistCls}">${fmtPct(pos.stop_distance_pct)}</div></div>
+          <div class="kpi"><div class="kpi-label">2R / 3R</div><div class="kpi-value green">$${fmtPrice(pos.level_2r)} / $${fmtPrice(pos.level_3r)}</div></div>
+          <div class="kpi"><div class="kpi-label">Mansfield</div><div class="kpi-value ${(pos.mansfield ?? 0) > 0 ? "green" : "red"}">${fmtMS(pos.mansfield)}</div></div>
+        </div>
+        ${note}
+      </div>`;
+  }
+
+  /* ----------------------- Señales ----------------------- */
+  function renderSignals(data) {
+    const sig = data?.signals || {};
+    const fg = sig.first_gen || [];
+    const cont = sig.continuation || [];
+    const total = fg.length + cont.length;
+
+    const headerBadge = total > 0
+      ? `<span class="pill muted">${total} candidatos</span>`
+      : `<span class="pill muted">Sin señales</span>`;
+
+    const body = total === 0
+      ? `<div class="panel-empty">
+           <span class="empty-icon">🔍</span>
+           <div><strong>No hay señales esta semana.</strong></div>
+           <div>Ningún ticker del S&amp;P 500 tiene core_score = 5.</div>
+         </div>`
+      : `
+        ${fg.length ? `<h3 class="section-divider">FIRST_GEN · prioridad alta</h3>` : ""}
+        ${fg.map(renderSignalRow).join("")}
+        ${cont.length ? `<h3 class="section-divider">CONTINUATION</h3>` : ""}
+        ${cont.map(renderSignalRow).join("")}
+      `;
+
+    return `
+      <section class="panel">
+        <div class="panel-header">
+          <h2>Señales de entrada</h2>
+          ${headerBadge}
+        </div>
+        <div class="panel-body">${body}</div>
+      </section>
+    `;
+  }
+
+  function renderSignalRow(s) {
+    const tipoPill = s.type === "FIRST_GEN"
+      ? `<span class="pill purple">FIRST_GEN</span>`
+      : `<span class="pill blue">CONTINUATION</span>`;
+
+    return `
+      <div class="row">
+        <div class="row-head">
+          <div class="row-symbol">
+            <span class="sym">${escapeHtml(s.symbol)}</span>
+            <span class="name">${escapeHtml(s.name || s.subindustry || "")}</span>
+          </div>
+          ${tipoPill}
+        </div>
+        <div class="row-grid">
+          <div class="kpi"><div class="kpi-label">Precio</div><div class="kpi-value">$${fmtPrice(s.current_price)}</div></div>
+          <div class="kpi"><div class="kpi-label">WMA30</div><div class="kpi-value">$${fmtPrice(s.wma30)}</div></div>
+          <div class="kpi"><div class="kpi-label">Stop</div><div class="kpi-value red">$${fmtPrice(s.stop_price)}</div></div>
+          <div class="kpi"><div class="kpi-label">Mansfield</div><div class="kpi-value ${(s.mansfield ?? 0) > 0 ? "green" : "red"}">${fmtMS(s.mansfield)}</div></div>
+          <div class="kpi"><div class="kpi-label">Sub-MS</div><div class="kpi-value ${(s.subind_ms ?? 0) > 0 ? "green" : "red"}">${fmtMS(s.subind_ms)}</div></div>
+          <div class="kpi"><div class="kpi-label">ATR%</div><div class="kpi-value">${fmtPct(s.atr_pct, false)}</div></div>
+        </div>
+      </div>`;
+  }
+
+  /* ----------------------- Live monitor ----------------------- */
+  function renderMonitor(data) {
+    const watchlist = data?.live_signal_monitor?.watchlist || [];
+    const headerBadge = watchlist.length > 0
+      ? `<span class="pill muted">${watchlist.length} en watchlist</span>`
+      : `<span class="pill muted">Sin watchlist</span>`;
+
+    const body = !watchlist.length
+      ? `<div class="panel-empty">
+           <span class="empty-icon">👁️</span>
+           <div>No hay tickers próximos a disparar.</div>
+         </div>`
+      : watchlist.map(renderWatchRow).join("");
+
+    return `
+      <section class="panel">
+        <div class="panel-header">
+          <h2>Live signal monitor</h2>
+          ${headerBadge}
+        </div>
+        <div class="panel-body">${body}</div>
+      </section>
+    `;
+  }
+
+  function renderWatchRow(s) {
+    const dist = s.distance_to_wma_pct ?? 0;
+    const distCls = dist >= 0 ? "green" : "amber";
+    return `
+      <div class="row">
+        <div class="row-head">
+          <div class="row-symbol">
+            <span class="sym">${escapeHtml(s.symbol)}</span>
+            <span class="name">${escapeHtml(s.name || "")}</span>
+          </div>
+          <span class="pill muted">A ${escapeHtml(fmtPct(s.trigger_distance_pct, false))} del trigger</span>
+        </div>
+        <div class="row-grid">
+          <div class="kpi"><div class="kpi-label">Precio</div><div class="kpi-value">$${fmtPrice(s.current_price)}</div></div>
+          <div class="kpi"><div class="kpi-label">WMA30</div><div class="kpi-value">$${fmtPrice(s.wma30)}</div></div>
+          <div class="kpi"><div class="kpi-label">Δ WMA</div><div class="kpi-value ${distCls}">${fmtPct(dist)}</div></div>
+          <div class="kpi"><div class="kpi-label">Mansfield</div><div class="kpi-value ${(s.mansfield ?? 0) > 0 ? "green" : "red"}">${fmtMS(s.mansfield)}</div></div>
+        </div>
+        ${s.note ? `<div class="row-note">${escapeHtml(s.note)}</div>` : ""}
+      </div>`;
+  }
+
+  /* ----------------------- Footer ----------------------- */
+  function renderFooter(data) {
+    return `
+      <footer class="app-footer">
+        <div><strong>${escapeHtml(data?.meta?.method || "Weinstein Stage 2 + Mansfield RS")}</strong></div>
+        <div>Datos del cierre semanal — actualizado cada viernes 22:00 GMT+1</div>
+        <div>Esta página es informativa y para uso personal. No es asesoramiento financiero.</div>
+      </footer>
+    `;
+  }
+
+  /* -----------------------------------------------------------
+     Render principal
+     ----------------------------------------------------------- */
+  function render(data, status) {
+    const root = document.getElementById("app");
+    root.innerHTML = `
+      ${renderHeader(data, status)}
+      ${renderUpdateBanner(status)}
+      ${renderMTBanner(data)}
+      ${renderActions(data)}
+      ${renderPortfolio(data)}
+      ${renderSignals(data)}
+      ${renderMonitor(data)}
+      ${renderFooter(data)}
+    `;
+  }
+
+  function renderFatalError(msg) {
+    document.getElementById("app").innerHTML = `
+      <div class="fullscreen-state">
+        <div style="font-size:42px">🛑</div>
+        <h2>No puedo cargar el dashboard</h2>
+        <p>${escapeHtml(msg)}</p>
+        <p>Comprueba que <code>data.json</code> y <code>update_status.json</code> existen y son válidos.</p>
+      </div>`;
+  }
+
+  /* -----------------------------------------------------------
+     Bootstrap
+     ----------------------------------------------------------- */
+  async function fetchJSON(url) {
+    const resp = await fetch(`${url}?t=${Date.now()}`, { cache: "no-store" });
+    if (!resp.ok) throw new Error(`${url}: ${resp.status}`);
+    return await resp.json();
+  }
+
+  async function bootstrap() {
+    let data, status;
+
+    try {
+      [data, status] = await Promise.all([
+        fetchJSON(DATA_URL),
+        fetchJSON(STATUS_URL).catch(() => ({
+          status: "ERROR",
+          errors: ["update_status.json no encontrado"],
+        })),
+      ]);
+    } catch (err) {
+      console.error(err);
+      renderFatalError(`Error cargando datos: ${err.message}`);
+      return;
+    }
+
+    // Heurística cliente: si last_run_at + 8 días < now → PENDIENTE
+    if (status?.status === "OK" && status.last_run_at) {
+      const ageDays = (Date.now() - new Date(status.last_run_at).getTime()) / 86400000;
+      if (ageDays > 8) status = { ...status, status: "PENDIENTE" };
+    }
+
+    render(data, status);
+  }
+
+  bootstrap();
+
+  // Auto-refresh cada 5 min para que timeAgo() y banners se mantengan vivos
+  setInterval(bootstrap, 5 * 60 * 1000);
+  </script>
 
 </body>
 </html>

@@ -1,0 +1,10 @@
+{
+  "description": "Cartera REAL — edítalo a mano cuando compres/vendas. Campos obligatorios: ticker, precio_compra. Opcionales (mejoran precisión): fecha_compra (YYYY-MM-DD), partials_done (['2R']|['2R','3R']), note.",
+  "capital_total": 100000,
+  "positions": [
+    { "ticker": "BKR", "precio_compra": 56.00, "fecha_compra": "2025-01-03", "note": "Baker Hughes" },
+    { "ticker": "CNP", "precio_compra": 42.35, "fecha_compra": "2025-01-03", "note": "CenterPoint Energy" },
+    { "ticker": "HSY", "precio_compra": 218.46, "fecha_compra": "2025-01-03", "note": "Hershey" },
+    { "ticker": "LMT", "precio_compra": 509.80, "fecha_compra": "2025-01-03", "note": "Lockheed Martin" }
+  ]
+}

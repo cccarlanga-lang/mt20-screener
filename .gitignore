@@ -1,5 +1,5 @@
 # Cache (se regenera en cada ejecucion)
-sp500_weekly_cache.pkl
+*.pkl
 
 # Python
 __pycache__/
@@ -25,3 +25,9 @@ portfolio_state.json
 
 # Reports texto (el HTML es lo que publicamos)
 weekly_reports/
+
+# Claude Code
+.claude/
+
+# Temporales
+error.txt
