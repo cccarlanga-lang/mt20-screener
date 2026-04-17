@@ -133,40 +133,29 @@ def run() -> int:
         "qqq_wma30": qqq_wma30_val,
     }
 
-    # --- Extraer señales: semana actual + semana anterior -------------
-    # TradingView muestra el estado actual de la señal, no solo la
-    # semana exacta de transición. Para no perder entradas válidas de
-    # la semana anterior que siguen activas, buscamos la señal en las
-    # últimas 2 semanas siempre que el core_score siga siendo 5 hoy.
+    # --- Extraer señales de la vela semanal cerrada -------------------
+    # Solo se emite señal en la semana exacta de transición a core=5.
+    # FIRST_GEN: el core pasó por 0 antes de llegar a 5.
+    # CONTINUATION: llegó a 5 sin haber pasado por 0 (salió y volvió).
+    # ATR: 0-2.0 → 100% size | 2.0-4.0 → 50% size | >4.0 → no entrada.
     signal_list: list[dict] = []
-    prev_date = spy_dates[-2] if len(spy_dates) >= 2 else last_date
 
     for sym, df in signals_df.items():
         if last_date not in df.index:
             continue
         row = df.loc[last_date]
-
-        # core_score debe ser 5 en la semana actual
+        sig_type = row.get("signal_type", "")
+        if sig_type not in ("FIRST_GEN", "CONTINUATION"):
+            continue
         core = int(row.get("core_score", 0))
         if core != 5:
             continue
 
-        # Buscar signal_type en semana actual; si no, en semana anterior
-        sig_type = row.get("signal_type", "")
-        if sig_type not in ("FIRST_GEN", "CONTINUATION"):
-            if prev_date in df.index:
-                prev_row = df.loc[prev_date]
-                if int(prev_row.get("core_score", 0)) == 5:
-                    sig_type = prev_row.get("signal_type", "")
-        if sig_type not in ("FIRST_GEN", "CONTINUATION"):
-            continue
-
         dist_atr = row["dist_atr"]
-        # Solo entradas dentro de 2.0 ATR (tamaño 100%, alineado con TV)
-        if np.isnan(dist_atr) or dist_atr < 0 or dist_atr > ATR_FULL:
+        if np.isnan(dist_atr) or dist_atr < 0 or dist_atr > ATR_HALF:
             continue
 
-        sizing = "100%"
+        sizing = "100%" if dist_atr <= ATR_FULL else "50%"
         ms = row["mansfield"]
         if np.isnan(ms):
             ms = None
