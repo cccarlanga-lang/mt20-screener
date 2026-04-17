@@ -133,25 +133,40 @@ def run() -> int:
         "qqq_wma30": qqq_wma30_val,
     }
 
-    # --- Extraer señales de la última fecha --------------------------
+    # --- Extraer señales: semana actual + semana anterior -------------
+    # TradingView muestra el estado actual de la señal, no solo la
+    # semana exacta de transición. Para no perder entradas válidas de
+    # la semana anterior que siguen activas, buscamos la señal en las
+    # últimas 2 semanas siempre que el core_score siga siendo 5 hoy.
     signal_list: list[dict] = []
+    prev_date = spy_dates[-2] if len(spy_dates) >= 2 else last_date
 
     for sym, df in signals_df.items():
         if last_date not in df.index:
             continue
         row = df.loc[last_date]
-        sig_type = row.get("signal_type", "")
-        if sig_type not in ("FIRST_GEN", "CONTINUATION"):
-            continue
+
+        # core_score debe ser 5 en la semana actual
         core = int(row.get("core_score", 0))
         if core != 5:
             continue
 
-        dist_atr = row["dist_atr"]
-        if np.isnan(dist_atr) or dist_atr < 0 or dist_atr > ATR_HALF:
+        # Buscar signal_type en semana actual; si no, en semana anterior
+        sig_type = row.get("signal_type", "")
+        if sig_type not in ("FIRST_GEN", "CONTINUATION"):
+            if prev_date in df.index:
+                prev_row = df.loc[prev_date]
+                if int(prev_row.get("core_score", 0)) == 5:
+                    sig_type = prev_row.get("signal_type", "")
+        if sig_type not in ("FIRST_GEN", "CONTINUATION"):
             continue
 
-        sizing = "100%" if dist_atr <= ATR_FULL else "50%"
+        dist_atr = row["dist_atr"]
+        # Solo entradas dentro de 2.0 ATR (tamaño 100%, alineado con TV)
+        if np.isnan(dist_atr) or dist_atr < 0 or dist_atr > ATR_FULL:
+            continue
+
+        sizing = "100%"
         ms = row["mansfield"]
         if np.isnan(ms):
             ms = None
