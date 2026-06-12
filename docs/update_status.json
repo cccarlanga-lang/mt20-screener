@@ -1,8 +1,8 @@
 {
   "status": "OK",
-  "last_run_at": "2026-06-05T22:10:36Z",
-  "next_run_at": "2026-06-12T21:00:00Z",
-  "last_data_date": "2026-06-02",
+  "last_run_at": "2026-06-12T22:19:30Z",
+  "next_run_at": "2026-06-19T21:00:00Z",
+  "last_data_date": "2026-06-09",
   "errors": [],
-  "log_url": "https://github.com/cccarlanga-lang/mt20-screener/actions/runs/27042690922"
+  "log_url": "https://github.com/cccarlanga-lang/mt20-screener/actions/runs/27446288475"
 }
