@@ -42,7 +42,7 @@ def run_engine():
     stock_universe, subind_map = get_sp500_tickers()
 
     print("[2/7] Descargando datos...")
-    all_data = load_data(stock_universe)
+    all_data = load_data(stock_universe, extra_tickers=['SPY', 'QQQ', 'RSP'])
     spy_close = all_data['SPY']['Close']
     spy_dates = all_data['SPY'].index
 
@@ -201,6 +201,8 @@ def run_engine():
         'mt_status': last_actions.get('mt_status', 'ROJO'),
         'mt_nhnl_ok': bool(mt_row.get('nhnl_ok', False)),
         'mt_qqq_ok': bool(mt_row.get('qqq_ok', False)),
+        'mt_spx_ok': bool(mt_row.get('spx_ok', False)),
+        'mt_rsp_ok': bool(mt_row.get('rsp_ok', False)),
         'equity': last_actions.get('equity', 0),
         'cash': last_actions.get('cash', 0),
         'n_positions': last_actions.get('n_positions', 0),
@@ -493,7 +495,7 @@ def generate_html(data):
 <div class="header">
   <h1>METODO TENDENCIA 2.0</h1>
   <div class="date">Reporte semanal &mdash; {data['date']}</div>
-  <div class="updated">Generado: {data['generated']} | S&P 500 | 10 posiciones</div>
+  <div class="updated">Generado: {data['generated']} | S&P 500 | C3: Mansfield slope 4w | C5: GICS Sub-Industry</div>
 </div>
 
 <div class="container">
@@ -505,8 +507,12 @@ def generate_html(data):
       <h2>SEMAFORO {mt_label}</h2>
       <div class="conditions">
         NH-NL (rising + &gt;MA50): <span class="{'cond-ok' if data['mt_nhnl_ok'] else 'cond-fail'}">{'OK' if data['mt_nhnl_ok'] else 'FALLO'}</span>
-        &nbsp;|&nbsp;
+        &nbsp;&bull;&nbsp;
         QQQ &gt; WMA30: <span class="{'cond-ok' if data['mt_qqq_ok'] else 'cond-fail'}">{'OK' if data['mt_qqq_ok'] else 'FALLO'}</span>
+        &nbsp;&bull;&nbsp;
+        SPX &gt; WMA30: <span class="{'cond-ok' if data.get('mt_spx_ok', data['mt_qqq_ok']) else 'cond-fail'}">{'OK' if data.get('mt_spx_ok', data['mt_qqq_ok']) else 'FALLO'}</span>
+        &nbsp;&bull;&nbsp;
+        RSP &gt; WMA30: <span class="{'cond-ok' if data.get('mt_rsp_ok', data['mt_qqq_ok']) else 'cond-fail'}">{'OK' if data.get('mt_rsp_ok', data['mt_qqq_ok']) else 'FALLO'}</span>
       </div>
       <div class="conditions">
         {'Se pueden abrir nuevas posiciones' if data['mt_status'] == 'VERDE' else 'No se abren nuevas posiciones. Existentes siguen con stops.'}
@@ -602,13 +608,14 @@ def generate_html(data):
   <div class="section">
     <div class="section-title">Reglas del Metodo</div>
     <div class="card method-info">
-      <p><strong>5 Condiciones Core:</strong> C1 Price&gt;WMA30 | C2 WMA30 rising | C3 Momentum 17w&gt;0 | C4 Mansfield RS&gt;0 | C5 Sub-Industry MS&gt;0</p>
-      <p><strong>Sub-Industria:</strong> Mansfield RS del indice sintetico GICS Sub-Industry (127 grupos) vs SPY</p>
+      <p><strong>5 Condiciones Core:</strong> C1 Price&gt;WMA30 | C2 WMA30 rising | C3 Mansfield RS slope 4w &gt; 0 | C4 Mansfield RS&gt;0 | C5 Sub-Industry Mansfield RS&gt;0</p>
+      <p><strong>C3 (slope 4w):</strong> Mansfield RS actual &gt; Mansfield RS hace 4 semanas — pendiente positiva, dinero relativo acelerando</p>
+      <p><strong>C5 Sub-Industria:</strong> Mansfield RS del indice sintetico GICS Sub-Industry (~127 grupos especificos) vs SPY — NO sectores amplios</p>
       <p><strong>Entrada:</strong> Core=5 al cierre del viernes &rarr; Comprar al OPEN del lunes | FG + CT ordenadas por Mansfield RS</p>
       <p><strong>ATR Sizing:</strong> 0-{ATR_FULL} ATR = 100% | {ATR_FULL}-{ATR_HALF} ATR = 50% | &gt;{ATR_HALF} = no entry</p>
       <p><strong>Stop:</strong> WMA30 &times; {STOP_PCT} | Breakeven tras 2R</p>
       <p><strong>Parciales:</strong> 2R = vender {int(PARTIAL_2R*100)}% | 3R = vender {int(PARTIAL_3R*100)}% | Runner = {int((1-PARTIAL_2R-PARTIAL_3R)*100)}% con trailing stop</p>
-      <p><strong>Market Timing:</strong> NH-NL rising+&gt;MA{NHNL_MA} AND QQQ&gt;WMA30 = VERDE | Rojo = no nuevas entradas</p>
+      <p><strong>Market Timing:</strong> NH-NL rising+&gt;MA{NHNL_MA} AND QQQ&gt;WMA30 = VERDE | SPX/RSP&gt;WMA30 informativos | Rojo = no nuevas entradas</p>
       <p><strong>Cartera:</strong> {MAX_POSITIONS} posiciones equiponderadas S&P 500</p>
     </div>
   </div>

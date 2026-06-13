@@ -343,6 +343,30 @@ def build_message(df, last_update, stats=None, spy_ctx=None):
 
 # ─── ENVÍO PÚBLICO ────────────────────────────────────────────────────────────
 
+def _get_spy_context(data=None):
+    """Construye el contexto SPY (close, sma30, pct) para incrustar en el mensaje."""
+    try:
+        from aspb_screener import calc_sma, SMA_LEN, load_data, BENCHMARK
+        if data is None:
+            data = load_data()
+        spy_df = data.get(BENCHMARK)
+        if spy_df is not None and len(spy_df) >= 32:
+            sma30   = calc_sma(spy_df["Close"], SMA_LEN)
+            close   = float(spy_df["Close"].iloc[-1])
+            sma_val = float(sma30.iloc[-1])
+            prev_cl = float(spy_df["Close"].iloc[-2])
+            return {
+                "close":   close,
+                "sma30":   sma_val,
+                "above":   close > sma_val,
+                "pct_sma": round((close / sma_val - 1) * 100, 1),
+                "wk_pct":  round((close / prev_cl - 1) * 100, 1),
+            }
+    except Exception:
+        pass
+    return None
+
+
 def send_weekly_summary(df, last_update, stats=None):
     """
     Construye y envía el resumen semanal por Telegram.
@@ -393,6 +417,89 @@ def send_weekly_summary(df, last_update, stats=None):
     else:
         print(f"  [Telegram] ✗ Error: {err}")
         return False, err
+
+
+# ─── BOT INTERACTIVO ─────────────────────────────────────────────────────────
+
+def run_bot_mode():
+    """
+    Modo bot polling: responde al chat autorizado con el screener completo.
+
+    Uso:
+        python aspb_telegram.py --bot          ← arranca el listener
+        Configurar en Task Scheduler: 'Al iniciar sesión'
+    Desde Telegram:
+        Envía cualquier mensaje al bot → recibes el screener al instante.
+    """
+    cfg = load_config()
+    if not cfg.get("enabled"):
+        print("  [Bot] Telegram desactivado. Actívalo en telegram_config.json")
+        return
+
+    token   = cfg.get("bot_token", "")
+    chat_id = str(cfg.get("chat_id", "")).strip()
+
+    if not token or not chat_id:
+        print("  [Bot] Falta token o chat_id. Ejecuta: python aspb_telegram.py --setup")
+        return
+
+    print(f"  [Bot] Activo en chat_id {chat_id}.")
+    print(f"  [Bot] Envíame cualquier mensaje en Telegram → recibirás el screener.")
+    print(f"  [Bot] Ctrl+C para detener.\n")
+
+    # Comandos reconocidos (cualquier otro texto también activa el screener)
+    _TRIGGER_CMDS = {"/screener", "/start", "/help", "screener", "análisis",
+                     "analisis", "señales", "senales", "informe", "report"}
+
+    offset = 0
+    while True:
+        try:
+            ok, result = _tg_post(token, "getUpdates",
+                                  {"limit": 10, "offset": offset, "timeout": 30})
+            if not ok:
+                time.sleep(5)
+                continue
+
+            for upd in result.get("result", []):
+                offset = upd["update_id"] + 1
+                msg = upd.get("message") or upd.get("channel_post")
+                if not msg:
+                    continue
+
+                sender_id = str(msg.get("chat", {}).get("id", ""))
+                if sender_id != chat_id:
+                    continue   # Solo responde al chat autorizado
+
+                txt = msg.get("text", "").strip().lower()
+                print(f"  [Bot] Mensaje: '{txt}' → ejecutando screener...")
+                _send_raw(token, chat_id,
+                          "⏳ <b>Ejecutando screener ASP-B…</b>\n"
+                          "<i>Descargando datos (1-2 min)…</i>")
+                try:
+                    from aspb_screener import run_screener, load_data
+                    data    = load_data()
+                    df_res  = run_screener()
+                    spy_ctx = _get_spy_context(data)
+                    text_m  = build_message(df_res, datetime.datetime.now(),
+                                            spy_ctx=spy_ctx)
+                    ok2, err = send_message(token, chat_id, text_m)
+                    if ok2:
+                        print("  [Bot] ✓ Screener enviado.")
+                    else:
+                        print(f"  [Bot] Error Telegram: {err}")
+                        _send_raw(token, chat_id,
+                                  f"❌ <b>Error al enviar:</b> <code>{err}</code>")
+                except Exception as exc:
+                    print(f"  [Bot] Error en screener: {exc}")
+                    _send_raw(token, chat_id,
+                              f"❌ <b>Error ejecutando screener:</b>\n<code>{exc}</code>")
+
+        except KeyboardInterrupt:
+            print("\n  [Bot] Detenido por el usuario.")
+            break
+        except Exception as outer:
+            _LOG.warning(f"Bot loop error: {outer}")
+            time.sleep(10)
 
 
 # ─── SCHEDULER ────────────────────────────────────────────────────────────────
@@ -458,6 +565,11 @@ def start_telegram_scheduler(get_state_fn):
 if __name__ == "__main__":
     print("\n=== ASP-B Telegram ===\n")
     cfg = load_config()
+
+    # ── Modo --bot: bot interactivo (responde a mensajes) ─────────────────────
+    if "--bot" in sys.argv:
+        run_bot_mode()
+        sys.exit(0)
 
     # ── Modo --setup: detectar chat_id automáticamente ────────────────────────
     if "--setup" in sys.argv:

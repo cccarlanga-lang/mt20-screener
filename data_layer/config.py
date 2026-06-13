@@ -6,10 +6,13 @@ from pathlib import Path
 # =====================================================================
 BASE_DIR      = Path(__file__).resolve().parent.parent
 PORTFOLIO_IN  = BASE_DIR / "portfolio_manual.json"
-SIGNALS_IN    = BASE_DIR / "signals_auto.json"
+SIGNALS_IN    = BASE_DIR / "signals_auto.json"        # USA (S&P 500)
+SIGNALS_EU_IN = BASE_DIR / "signals_auto_eu.json"     # Europa (STOXX 600)
 DOCS_DIR      = BASE_DIR / "docs"
 DATA_OUT      = DOCS_DIR / "data.json"
 STATUS_OUT    = DOCS_DIR / "update_status.json"
+REGIME_HIST   = BASE_DIR / "regime_history.json"        # snapshot semanal MT
+EQUITY_HIST   = BASE_DIR / "equity_history.json"        # snapshot semanal equity
 CACHE_DAILY   = BASE_DIR / "cache_daily.pkl"   # precios diarios (para "current_price" del viernes)
 CACHE_WEEKLY  = BASE_DIR / "sp500_weekly_cache.pkl"  # compartido con weekly_engine.py
 
@@ -38,4 +41,4 @@ MT_ROJO_BLOCKS_BUYS  = True
 
 # Versión del contrato data.json (ver docs/SCHEMA.md)
 SCHEMA_VERSION = "1.0"
-METHOD_LABEL   = "Weinstein Stage 2 + Mansfield RS"
+METHOD_LABEL   = "V19 · Core 4/4 · SMA30 · Vol>MA10w · DistATR≤2.5 · Stop SMA30×0.97 · Composite 70%MS+30%CFI"

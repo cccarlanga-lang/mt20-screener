@@ -1,21 +1,25 @@
 #!/usr/bin/env python3
 """
-METODO TENDENCIA 2.0 - MOTOR DE CARTERA SEMANAL
-=================================================
+METODO TENDENCIA 2.0 - MOTOR DE CARTERA SEMANAL (V19)
+======================================================
 Engine completo que:
   1. Descarga datos semanales de TODAS las acciones del S&P 500 (Yahoo Finance)
-  2. Calcula indicadores: WMA30, Momentum, Mansfield RS (stock + sub-industria GICS), ATR
+  2. Calcula indicadores: SMA30, Mansfield RS (stock + sub-industria GICS), ATR, CFI 3.0
   3. Clasifica entradas: PRIMERA GENERACION vs CONTINUACION
-  4. Semaforo Market Timing: NH-NL + QQQ>WMA30
+  4. Semaforo Market Timing: NH-NL + QQQ>SMA30
   5. Gestiona cartera de 10 posiciones equal-weight
   6. Genera reporte semanal: que comprar, que vender, parciales, reemplazos
 
-LOGICA FIRST-GEN vs CONTINUACION:
-  - core_score = 5 condiciones (price>WMA, WMA rising, Mom>0, Mansfield>0, SubIndustryMS>0)
-  - C5 usa Mansfield RS de GICS Sub-Industry (indice sintetico equal-weight) vs SPY
-  - PRIMERA GENERACION: core estuvo en 0 (ninguna condicion) antes de llegar a 5
-  - CONTINUACION: core nunca llego a 0, llega a 5 desde 1-4
-  - Ambas generan entrada, ordenadas por Mansfield RS (first-gen y continuation)
+LOGICA FIRST-GEN vs CONTINUACION (V19 DEFINITIVO):
+  - core_score = 4 condiciones:
+      C1 Price>SMA30 | C2 SMA30 rising | C3 Mansfield RS slope 4w>0 | C4 Mansfield RS>0
+  - C5 Sub-Industry Mansfield RS>0: calculado e incluido como informacion, NO como filtro
+  - Volume filter (vol > MA10w): filtro de confirmacion adicional (emit_signals_auto)
+  - Distance filter: 0 <= dist_ATR <= 2.5 (hard cutoff unico; sin sizing parcial)
+  - Ranking: 70% Mansfield RS percentil + 30% CFI rank (composito definitivo)
+  - PRIMERA GENERACION: core estuvo en 0 (ninguna condicion) antes de llegar a 4
+  - CONTINUACION: core nunca llego a 0, llega a 4 desde 1-3
+  - Ambas generan entrada, ordenadas por composito 70/30
 
 USO:
   python weekly_engine.py              # Reporte semanal completo
@@ -40,6 +44,7 @@ warnings.filterwarnings('ignore')
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 CACHE_FILE = os.path.join(BASE_DIR, 'sp500_weekly_cache.pkl')
+CACHE_FILE_EU = os.path.join(BASE_DIR, 'stoxx600_weekly_cache.pkl')
 PORTFOLIO_FILE = os.path.join(BASE_DIR, 'portfolio_state.json')
 OUTPUT_DIR = os.path.join(BASE_DIR, 'weekly_reports')
 
@@ -55,8 +60,8 @@ WMA_PERIOD = 30
 MOMENTUM_PERIOD = 17
 ATR_PERIOD = 14
 MANSFIELD_MA = 52
-ATR_FULL = 2.0       # 0-2.0 ATR = 100%
-ATR_HALF = 4.0       # 2.0-4.0 = 50%, >4.0 = no entry
+ATR_FULL = 2.5       # 0-2.5 ATR = entrada valida (100%)
+ATR_HALF = 2.5       # mismo valor: cutoff unico, sin sizing parcial (V19)
 STOP_PCT = 0.97      # WMA30 * 0.97
 PARTIAL_2R = 0.25
 PARTIAL_3R = 0.25
@@ -79,6 +84,16 @@ SECTOR_ETF_MAP = {
     'Real Estate': 'XLRE',
     'Materials': 'XLB',
 }
+
+# Reexport de STOXX 600 (lista curada) para que emit_signals_auto
+# pueda importar desde el engine como hace con el S&P.
+try:
+    from stoxx600_tickers import get_stoxx600_tickers  # noqa: F401
+except Exception as _stoxx_err:  # pragma: no cover
+    print(f"  [WARN] stoxx600_tickers no disponible: {_stoxx_err}")
+    def get_stoxx600_tickers():
+        return {}, {}
+
 
 def get_sp500_tickers():
     """Get S&P 500 tickers with sector ETF and GICS Sub-Industry mapping.
@@ -150,23 +165,31 @@ def get_fallback_universe():
 # =====================================================================
 # DATA LOADING
 # =====================================================================
-def load_data(stock_universe, force_refresh=False):
+def load_data(stock_universe, force_refresh=False, cache_file=None, extra_tickers=None):
     """Download weekly OHLCV for all S&P 500 + extras.
     CRITICAL: Aligns all data to SPY's weekly dates to prevent date mismatch bugs.
+
+    Parameters
+    ----------
+    cache_file : str, optional
+        Ruta al pickle de caché. Default: CACHE_FILE (USA).
+    extra_tickers : list[str], optional
+        Tickers adicionales (índices, benchmarks). Default: ['SPY', 'QQQ'].
     """
-    if not force_refresh and os.path.exists(CACHE_FILE):
-        mod_time = os.path.getmtime(CACHE_FILE)
+    cache_path = cache_file or CACHE_FILE
+    if not force_refresh and os.path.exists(cache_path):
+        mod_time = os.path.getmtime(cache_path)
         age_hours = (time.time() - mod_time) / 3600
         if age_hours < 12:
-            print("  Cargando cache (< 12h)...")
-            with open(CACHE_FILE, 'rb') as f:
+            print(f"  Cargando cache (< 12h) [{os.path.basename(cache_path)}]...")
+            with open(cache_path, 'rb') as f:
                 cached = pickle.load(f)
             if len(cached) > len(stock_universe) * 0.7:
                 return cached
             print("  Cache incompleto, re-descargando...")
 
     sector_etfs = sorted(set(stock_universe.values()))
-    extra = ['SPY', 'QQQ']
+    extra = list(extra_tickers) if extra_tickers is not None else ['SPY', 'QQQ']
     all_tickers = sorted(set(list(stock_universe.keys()) + sector_etfs + extra))
 
     print(f"  Descargando {len(all_tickers)} tickers semanales...")
@@ -204,24 +227,31 @@ def load_data(stock_universe, force_refresh=False):
             print(f"    Batch error: {e}")
 
     # CRITICAL: Align ALL stocks to SPY's weekly date grid
-    # This prevents equity calculation bugs from date mismatches
-    if 'SPY' not in raw_data:
-        print("  ERROR: No SPY data!")
-        return raw_data
+    # This prevents equity calculation bugs from date mismatches.
+    # Europa: si no hay SPY en el universo europeo, se descarga como extra
+    # igualmente; si aun así faltara, usar el primer ticker con índice más largo.
+    anchor_ticker = 'SPY' if 'SPY' in raw_data else None
+    if anchor_ticker is None:
+        # fallback: el ticker con más barras (útil si el usuario fuerza otro anchor)
+        if not raw_data:
+            print("  ERROR: Sin datos!")
+            return raw_data
+        anchor_ticker = max(raw_data.keys(), key=lambda t: len(raw_data[t].index))
+        print(f"  [WARN] SPY ausente, anchor semanal = {anchor_ticker}")
 
-    spy_dates = raw_data['SPY'].index
-    print(f"  Alineando {len(raw_data)} tickers a {len(spy_dates)} fechas semanales de SPY...")
+    anchor_dates = raw_data[anchor_ticker].index
+    print(f"  Alineando {len(raw_data)} tickers a {len(anchor_dates)} fechas semanales de {anchor_ticker}...")
 
     stock_data = {}
     for ticker, df in raw_data.items():
-        aligned = df.reindex(spy_dates, method='ffill')
+        aligned = df.reindex(anchor_dates, method='ffill')
         aligned = aligned.ffill().dropna(subset=['Close'])
         if len(aligned) >= 80:
             stock_data[ticker] = aligned
 
     print(f"  Total cargados y alineados: {len(stock_data)} tickers")
 
-    with open(CACHE_FILE, 'wb') as f:
+    with open(cache_path, 'wb') as f:
         pickle.dump(stock_data, f)
 
     return stock_data
@@ -266,6 +296,9 @@ def calc_wma(series, period):
     weights = np.arange(1, period + 1, dtype=float)
     return series.rolling(period).apply(lambda x: np.dot(x, weights) / weights.sum(), raw=True)
 
+def calc_sma(series, period):
+    return series.rolling(period).mean()
+
 def calc_atr(high, low, close, period):
     tr = pd.concat([high - low, (high - close.shift(1)).abs(),
                      (low - close.shift(1)).abs()], axis=1).max(axis=1)
@@ -276,15 +309,50 @@ def calc_mansfield(stock_close, bench_close, ma_period=52):
     ma = rp.rolling(ma_period).mean()
     return ((rp / ma) - 1.0) * 100.0
 
-def compute_stock_data(df, spy_close, subind_close):
-    """Compute all indicators for one stock.
-    C5 uses GICS Sub-Industry Mansfield RS (synthetic equal-weight index vs SPY).
-    Returns DataFrame.
+def compute_cfi(close, volume, period=52):
     """
-    c, h, l, o = df['Close'], df['High'], df['Low'], df['Open']
+    CFI 3.0 (Victor Galan) — replica exacta del Pine Script.
+    NVI acumula precio solo en dias/semanas de volumen decreciente.
+    Retorna Series con CFI2 = vol - volpmed (centrado en 0).
+    """
+    close = close.ffill()
+    volume = volume.ffill()
+    n = len(close)
+    nvi = np.full(n, np.nan, dtype=float)
+    nvi[0] = 1000.0
+    c_arr = close.values
+    v_arr = volume.values
+    for i in range(1, n):
+        if np.isnan(c_arr[i]) or np.isnan(c_arr[i-1]) or c_arr[i-1] == 0:
+            nvi[i] = nvi[i-1] if not np.isnan(nvi[i-1]) else 1000.0
+            continue
+        ret = (c_arr[i] - c_arr[i-1]) / c_arr[i-1]
+        if not np.isnan(v_arr[i]) and not np.isnan(v_arr[i-1]) and v_arr[i] < v_arr[i-1]:
+            nvi[i] = nvi[i-1] * (1.0 + ret)
+        else:
+            nvi[i] = nvi[i-1]
+    nvi_s = pd.Series(nvi, index=close.index)
+    cfi_raw = nvi_s * c_arr
+    volmax = cfi_raw.rolling(period, min_periods=int(period * 0.5)).max()
+    vol_norm = (cfi_raw * 100.0 / volmax.replace(0, np.nan)) * 0.8
+    volpmed = vol_norm.ewm(span=period, adjust=False).mean()
+    cfi2 = vol_norm - volpmed
+    return cfi2.rename("cfi2")
+
+def compute_stock_data(df, spy_close, subind_close):
+    """
+    Indicadores para un stock. V19 definitivo: core 4/4 (C1-C4).
+    C5 sub-industria queda calculado como informacion pero NO forma parte del core.
+    """
+    c   = df['Close']
+    h   = df['High']
+    l   = df['Low']
+    o   = df['Open']
+    vol = df['Volume'] if 'Volume' in df.columns else pd.Series(np.nan, index=df.index)
     idx = df.index
 
-    wma = calc_wma(c, WMA_PERIOD)
+    # SMA30 es la MA original de Weinstein
+    wma = calc_sma(c, WMA_PERIOD)
     atr = calc_atr(h, l, c, ATR_PERIOD)
     spy_al = spy_close.reindex(idx, method='ffill')
     sub_al = subind_close.reindex(idx, method='ffill')
@@ -292,28 +360,33 @@ def compute_stock_data(df, spy_close, subind_close):
     r = pd.DataFrame(index=idx)
     r['close'] = c
     r['open'] = o
-    r['open_next'] = o.shift(-1)   # Open of NEXT week (for entry price)
+    r['open_next'] = o.shift(-1)
     r['wma'] = wma
     r['atr'] = atr
 
-    # 5 core conditions
-    r['c1_above_wma'] = (c > wma).fillna(False)
-    r['c2_wma_rising'] = (wma > wma.shift(1)).fillna(False)
-    r['c3_mom_ok'] = ((c - c.shift(MOMENTUM_PERIOD)) > 0).fillna(False)
+    # Volume filter (MA10w) — fillna(True): sin datos de volumen no bloqueamos entrada
+    r['vol_weekly'] = vol
+    r['vol_ma10']   = vol.rolling(10, min_periods=5).mean()
+    r['vol_ok']     = (vol > r['vol_ma10']).fillna(True)
 
+    # --- 4 core conditions (V19) ---
+    r['c1_above_wma']  = (c > wma).fillna(False)
+    r['c2_wma_rising'] = (wma > wma.shift(1)).fillna(False)
+
+    # C3: Mansfield RS slope positiva en 4 semanas
     ms = calc_mansfield(c, spy_al, MANSFIELD_MA)
-    r['c4_ms_ok'] = (ms > 0).fillna(False)
+    r['c3_mom_ok'] = (ms > ms.shift(4)).fillna(False)
+    r['c4_ms_ok']  = (ms > 0).fillna(False)
     r['mansfield'] = ms
 
-    # C5: Sub-Industry Mansfield RS (replaces broad sector ETF)
+    # C5: Sub-Industry Mansfield RS — informativo, NO parte del core
     sub_ms = calc_mansfield(sub_al, spy_al, MANSFIELD_MA)
     r['c5_subind_ok'] = (sub_ms > 0).fillna(False)
     r['subind_ms'] = sub_ms
 
-    # Core score (0-5)
-    r['core_score'] = (r['c1_above_wma'].astype(int) + r['c2_wma_rising'].astype(int) +
-                       r['c3_mom_ok'].astype(int) + r['c4_ms_ok'].astype(int) +
-                       r['c5_subind_ok'].astype(int))
+    # Core score 0-4 (V19: solo C1-C4)
+    r['core_score'] = (r['c1_above_wma'].astype(int)  + r['c2_wma_rising'].astype(int) +
+                       r['c3_mom_ok'].astype(int)      + r['c4_ms_ok'].astype(int))
 
     # ATR distance
     r['dist_atr'] = (c - wma) / atr
@@ -332,12 +405,10 @@ def compute_stock_data(df, spy_close, subind_close):
 # =====================================================================
 def classify_entries(stock_indicators):
     """
-    For each stock, classify potential entries as FIRST-GEN or CONTINUATION.
+    Clasifica entradas como FIRST-GEN o CONTINUATION (V19: core max = 4).
 
-    FIRST-GEN: core_score was 0 at some point before reaching 5
-    CONTINUATION: core_score went from 1-4 to 5 without ever hitting 0
-
-    Returns: dict {sym: DataFrame with 'signal_type' column}
+    FIRST-GEN:    core estuvo en 0 antes de llegar a 4
+    CONTINUATION: core nunca llego a 0, llega a 4 desde 1-3
     """
     result = {}
     for sym, ind in stock_indicators.items():
@@ -345,8 +416,7 @@ def classify_entries(stock_indicators):
         n = len(core)
 
         signal_type = pd.Series('', index=ind.index)
-        was_zero = True  # Start fresh: assume reset at beginning
-        was_five = False
+        was_zero  = True
         in_signal = False
 
         for i in range(n):
@@ -357,20 +427,19 @@ def classify_entries(stock_indicators):
             cs = int(cs)
 
             if cs == 0:
-                was_zero = True
-                was_five = False
+                was_zero  = True
                 in_signal = False
 
-            if cs == 5 and not in_signal:
+            if cs == 4 and not in_signal:
                 if was_zero:
                     signal_type.iloc[i] = 'FIRST_GEN'
                     in_signal = True
-                    was_zero = False
+                    was_zero  = False
                 else:
                     signal_type.iloc[i] = 'CONTINUATION'
                     in_signal = True
 
-            if cs < 5:
+            if cs < 4:
                 in_signal = False
 
         ind_copy = ind.copy()
@@ -382,17 +451,25 @@ def classify_entries(stock_indicators):
 # =====================================================================
 # MARKET TIMING (NH-NL + QQQ>WMA30)
 # =====================================================================
-def compute_market_timing(all_data, stock_universe):
+def compute_market_timing(all_data, stock_universe, anchor_symbol='SPY', index_symbol='QQQ'):
     """
     Semaforo:
-      VERDE: NH-NL rising + above MA50  AND  QQQ > WMA30
+      VERDE: NH-NL rising + above MA50  AND  <index_symbol> > WMA30
       ROJO: cualquiera falla
+
+    anchor_symbol : serie usada como rejilla de fechas (USA: SPY, EU: ^STOXX).
+    index_symbol  : benchmark del segundo filtro (USA: QQQ, EU: ^STOXX).
     """
-    spy = all_data.get('SPY')
-    qqq = all_data.get('QQQ')
+    spy = all_data.get(anchor_symbol)
+    qqq = all_data.get(index_symbol)
     if spy is None:
-        print("  ERROR: No SPY data")
-        return None, None
+        # fallback: intentar con el ticker de mayor longitud
+        if not all_data:
+            print(f"  ERROR: No hay datos para anchor={anchor_symbol}")
+            return None, None
+        fallback_key = max(all_data.keys(), key=lambda t: len(all_data[t].index))
+        print(f"  [WARN] anchor {anchor_symbol} ausente — usando {fallback_key}")
+        spy = all_data[fallback_key]
 
     spy_close = spy['Close']
     idx = spy_close.index
@@ -415,13 +492,25 @@ def compute_market_timing(all_data, stock_universe):
     nhnl_ma = nhnl.rolling(NHNL_MA, min_periods=10).mean()
     cond_nhnl = ((nhnl_ma > nhnl_ma.shift(1)) & (nhnl > nhnl_ma)).fillna(False)
 
-    # QQQ > WMA30
+    # <index_symbol> (QQQ) > WMA30
     if qqq is not None:
         qqq_close = qqq['Close'].reindex(idx, method='ffill')
         qqq_wma = calc_wma(qqq_close, WMA_PERIOD)
         cond_qqq = (qqq_close > qqq_wma).fillna(False)
     else:
+        print(f"  [WARN] index_symbol {index_symbol} ausente — se asume condición OK")
         cond_qqq = pd.Series(True, index=idx)
+
+    # SPX (anchor SPY) > WMA30  [informativo]
+    cond_spx = (spy_close > calc_wma(spy_close, WMA_PERIOD)).fillna(False)
+
+    # RSP (S&P 500 Equal-Weight) > WMA30  [informativo — amplia participación]
+    rsp_data = all_data.get('RSP')
+    if rsp_data is not None:
+        rsp_close = rsp_data['Close'].reindex(idx, method='ffill')
+        cond_rsp = (rsp_close > calc_wma(rsp_close, WMA_PERIOD)).fillna(False)
+    else:
+        cond_rsp = pd.Series(True, index=idx)  # fallback si RSP no se descargó
 
     # Semaforo
     verde = cond_nhnl & cond_qqq
@@ -431,11 +520,14 @@ def compute_market_timing(all_data, stock_universe):
     details['nhnl_ma'] = nhnl_ma
     details['nhnl_ok'] = cond_nhnl
     details['qqq_ok'] = cond_qqq
+    details['spx_ok'] = cond_spx
+    details['rsp_ok'] = cond_rsp
     details['verde'] = verde
 
     green_pct = verde.sum() / len(verde) * 100
     print(f"  Semaforo VERDE: {verde.sum()}/{len(verde)} semanas ({green_pct:.0f}%)")
-    print(f"    NH-NL OK: {cond_nhnl.sum()}, QQQ>WMA: {cond_qqq.sum()}")
+    print(f"    NH-NL OK: {cond_nhnl.sum()}, SPX>WMA: {cond_spx.sum()}, "
+          f"QQQ>WMA: {cond_qqq.sum()}, RSP>WMA: {cond_rsp.sum()}")
 
     return verde, details
 
@@ -634,7 +726,7 @@ class PortfolioEngine:
             if sym not in signals or date not in signals[sym].index:
                 continue
             row = signals[sym].loc[date]
-            if (int(row.get('core_score', 0)) == 5 and
+            if (int(row.get('core_score', 0)) == 4 and
                     not np.isnan(row['dist_atr']) and
                     0 <= row['dist_atr'] <= ATR_FULL and mt_verde):
                 addon_px = row['open'] if not np.isnan(row['open']) else row['close']
@@ -677,14 +769,19 @@ class PortfolioEngine:
                 continue
 
             core = int(row.get('core_score', 0))
-            if core != 5:
+            if core != 4:
+                continue
+
+            # Volume filter (V19)
+            if not bool(row.get('vol_ok', True)):
                 continue
 
             dist_atr = row['dist_atr']
             if np.isnan(dist_atr) or dist_atr < 0 or dist_atr > ATR_HALF:
                 continue
 
-            sizing = '100%' if dist_atr <= ATR_FULL else '50%'
+            # V19: always 100% sizing
+            sizing = '100%'
             ms = row['mansfield']
             if np.isnan(ms):
                 ms = -999

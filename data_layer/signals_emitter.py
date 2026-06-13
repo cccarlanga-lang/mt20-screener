@@ -42,11 +42,22 @@ Schema v1.0:
           "industry_mansfield": float?,
           "subindustry_mansfield": float?,
           "notes": str?,
-          # extras OPCIONALES, usados por el pipeline si están:
-          "sizing": "100%" | "50%" | null,
-          "atr_distance": float?,
+          # extras OPCIONALES V19 — usados por el pipeline si están:
+          "sizing": "100%",          # V19: siempre 100% (no sizing parcial)
+          "atr_distance": float?,    # distancia ATR (0-2.5 en V19)
           "name": str?,
-          "subindustry": str?
+          "subindustry": str?,
+          "region": str?,            # "USA" | "EUROPE"
+          "ms_slope_4w": float?,
+          # V19: ranking composite 70/30
+          "cfi2": float?,            # CFI 3.0 (Galan) — centrado en 0
+          "cfi_rank": float?,        # percentil cross-seccional CFI (0-100)
+          "cfi_slope_4w": float?,    # delta CFI2 en 4 semanas
+          "ms_rank": float?,         # percentil cross-seccional Mansfield (0-100)
+          "composite_score": float?, # 0.7*ms_rank + 0.3*cfi_rank
+          # V19: WIR exit monitoring
+          "wir_dist_risk": float?,   # dist_atr*40 (0-100, umbral alerta 65)
+          "wir_subind_state": str?   # ADVANCING|WEAKENING|BASING|DECLINING
         }
       ],
       "meta": { "source": str, "version": "1.0" }
@@ -253,8 +264,16 @@ def _normalize_signal(s: dict) -> dict:
         "subindustry_mansfield": _f(s.get("subindustry_mansfield")),
         "notes":                 s.get("notes") or "",
     }
-    # Extras opcionales que el pipeline sabe leer
-    for k in ("sizing", "atr_distance", "name", "subindustry"):
+    # Extras opcionales (V19: CFI+composite fields + WIR monitoring)
+    _OPTIONAL = (
+        "sizing", "atr_distance", "name", "subindustry", "region",
+        "ms_slope_4w",
+        # V19 ranking
+        "cfi2", "cfi_rank", "cfi_slope_4w", "ms_rank", "composite_score",
+        # WIR exit monitoring
+        "wir_dist_risk", "wir_subind_state",
+    )
+    for k in _OPTIONAL:
         if k in s and s[k] is not None:
             out[k] = s[k]
     return out
