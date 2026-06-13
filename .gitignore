@@ -31,3 +31,10 @@ weekly_reports/
 
 # Temporales
 error.txt
+
+# Credenciales Telegram (usa GitHub Secrets en produccion)
+telegram_config.json
+
+# Logs y cache ASP-B
+aspb_tg_log.txt
+*.pkl
