@@ -661,262 +661,331 @@ def run_screener(force_refresh=False):
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# GENERADOR HTML
+# GENERADOR HTML — estructura idéntica al mensaje Telegram
 # ─────────────────────────────────────────────────────────────────────────────
-_BADGE = {
-    "BUY":      ('<span class="badge buy">🔥 BUY</span>',   "#10b981"),
-    "NEAR":     ('<span class="badge near">👀 NEAR</span>', "#f59e0b"),
-    "IN_TRADE": ('<span class="badge in">📈 IN</span>',     "#8b5cf6"),
-    "SETUP":    ('<span class="badge setup">📊 SETUP</span>', "#3b82f6"),
-}
+
+def _tier_val(r):
+    """Tier: 2=Confluencia (MS≥5%+RS near high), 1=Filtro OK (MS≥5%), 0=sin filtro."""
+    if not bool(r.get("ms_filter_ok", False)):
+        return 0
+    if bool(r.get("rs_near_high", False)):
+        return 2
+    return 1
 
 def _fmt(v, decimals=2, prefix="", suffix=""):
     if v is None or (isinstance(v, float) and np.isnan(v)):
         return "—"
     return f"{prefix}{v:,.{decimals}f}{suffix}"
 
-def _bool_badge(val, true_txt, false_txt, true_cls, false_cls):
-    if val:
-        return f'<span class="mini-badge {true_cls}">{true_txt}</span>'
-    return f'<span class="mini-badge {false_cls}">{false_txt}</span>'
-
 def _row_html(r):
-    sig        = r["signal"]
-    badge_html, row_color = _BADGE.get(sig, ("", "#ffffff"))
-    row_accent = f"border-left: 3px solid {row_color};"
+    sig   = r["signal"]
+    tier  = _tier_val(r)
 
-    dist_v    = r["dist_pct"]
-    rr_v      = r["rr"]
-    pnl_v     = r["pnl_pct"]
+    # Color de la fila según tier
+    if tier == 2:
+        left_col = "#FFD700"
+    elif tier == 1:
+        left_col = "#10b981"
+    elif sig == "IN_TRADE":
+        left_col = "#8b5cf6"
+    elif sig == "SETUP":
+        left_col = "#3b82f6"
+    else:
+        left_col = "#334155"
 
-    dist_col  = "#10b981" if abs(dist_v) < 1.5 else "#f59e0b" if abs(dist_v) < 3.5 else "#94a3b8"
-    rr_col    = "#10b981" if (not np.isnan(rr_v) and rr_v >= 2.5) else "#f59e0b" if (not np.isnan(rr_v) and rr_v >= 1.5) else "#ef4444"
-    pnl_col   = "#10b981" if (not np.isnan(pnl_v) and pnl_v >= 0) else "#ef4444"
+    # Tier badge
+    if tier == 2:
+        tier_badge = '<span class="tier-badge tier-c">⭐ CONFLUENCIA</span>'
+    elif tier == 1:
+        tier_badge = '<span class="tier-badge tier-f">✅ FILTRO OK</span>'
+    else:
+        tier_badge = '<span class="tier-badge tier-n">—</span>'
 
-    sma_badge = _bool_badge(r["sma30_up"], "SMA30↑", "SMA30↓", "badge-ok", "badge-ko")
-    ms_badge  = _bool_badge(r["ms_positive"], "MS+", "MS−",     "badge-ok", "badge-ko")
-    ms_color  = "#10b981" if r["ms_positive"] else "#ef4444"
+    # Signal badge
+    sig_map = {
+        "BUY":      '<span class="badge buy">🔥 BUY</span>',
+        "NEAR":     '<span class="badge near">👀 NEAR</span>',
+        "IN_TRADE": '<span class="badge in">📈 IN</span>',
+        "SETUP":    '<span class="badge setup">📊 SETUP</span>',
+    }
+    badge_html = sig_map.get(sig, "")
 
-    # Failed breakout badge (naranja de aviso)
-    fb        = r.get("failed_breakout", False)
-    fb_badge  = ('<span class="mini-badge badge-warn" title="Hubo un breakout fallido previo">⚠️ FBrk</span>'
-                 if fb else "")
+    # Stage badge
+    stage = r.get("stage")
+    if stage == 2:
+        stage_badge = '<span class="mini-badge badge-ok">Stage 2</span>'
+    elif stage == 4:
+        stage_badge = '<span class="mini-badge badge-ko">Stage 4</span>'
+    else:
+        stage_badge = f'<span class="mini-badge" style="color:#94a3b8">Stage {stage or "?"}</span>'
 
-    dist_txt = f'<span style="color:{dist_col}">{_fmt(dist_v, 1, suffix="%")}</span>'
-    rr_txt   = f'<span style="color:{rr_col}">{_fmt(rr_v, 2)}</span>'
-    pnl_txt  = (f'<span style="color:{pnl_col}">{_fmt(pnl_v, 1, suffix="%")}</span>'
-                if sig == "IN_TRADE" else "—")
-    ms_txt   = f'<span style="color:{ms_color}">{_fmt(r["mansfield"], 1, suffix="%")}</span>'
+    dist_v = r["dist_pct"]
+    rr_v   = r["rr"]
+    pnl_v  = r["pnl_pct"]
+    ms_v   = r["mansfield"]
 
-    idx_badge = ('<span class="idx-sp">SP500</span>' if r["index"] == "SP500"
-                 else '<span class="idx-nq">NASDAQ</span>')
+    dist_col = "#10b981" if abs(dist_v) < 1.5 else "#f59e0b" if abs(dist_v) < 3.5 else "#94a3b8"
+    rr_col   = ("#10b981" if (not (isinstance(rr_v, float) and np.isnan(rr_v)) and rr_v >= 2.5)
+                else "#f59e0b" if (not (isinstance(rr_v, float) and np.isnan(rr_v)) and rr_v >= 1.5)
+                else "#ef4444")
+    pnl_col  = "#10b981" if (not (isinstance(pnl_v, float) and np.isnan(pnl_v)) and pnl_v >= 0) else "#ef4444"
+    ms_col   = "#10b981" if (not (isinstance(ms_v, float) and np.isnan(ms_v)) and ms_v >= 5) else \
+               "#f59e0b" if (not (isinstance(ms_v, float) and np.isnan(ms_v)) and ms_v >= 0) else "#ef4444"
+
+    fb = r.get("failed_breakout", False)
+    fb_badge = ('<span class="mini-badge badge-warn" title="Breakout fallido previo">⚠️ FBrk</span>'
+                if fb else "")
+
+    idx = r.get("index", "SP500")
+    idx_badge = ('<span class="idx-sp">SP500</span>' if idx == "SP500"
+                 else '<span class="idx-nq">NASDAQ</span>' if idx == "NASDAQ"
+                 else '<span class="idx-eu">EU-ADR</span>')
+
+    pnl_txt = (f'<span style="color:{pnl_col}">{_fmt(pnl_v,1,suffix="%")}</span>'
+               if sig == "IN_TRADE" else "—")
 
     return f"""
-    <tr style="{row_accent}">
+    <tr style="border-left:3px solid {left_col}">
       <td class="ticker-cell"><strong>{r['ticker']}</strong> {fb_badge}</td>
+      <td>{tier_badge}</td>
       <td>{idx_badge}</td>
       <td>{badge_html}</td>
-      <td class="num">{_fmt(r['close'], 2)}</td>
-      <td class="num entry-col">{_fmt(r['entry'], 2)}</td>
-      <td class="num">{dist_txt}</td>
-      <td class="num stop-col">{_fmt(r['stop'], 2)}</td>
-      <td class="num">{_fmt(r['risk_pct'], 1, suffix="%")}</td>
-      <td class="num tp1-col">{_fmt(r['tp1'], 2)}</td>
-      <td class="num tp2-col">{_fmt(r['tp2'], 2)}</td>
-      <td class="num">{rr_txt}</td>
+      <td>{stage_badge}</td>
+      <td class="num" style="color:{ms_col};font-weight:600">{_fmt(ms_v,1,suffix="%")}</td>
+      <td class="num">{_fmt(r['close'],2)}</td>
+      <td class="num entry-col">{_fmt(r['entry'],2)}</td>
+      <td class="num" style="color:{dist_col}">{_fmt(dist_v,1,suffix="%")}</td>
+      <td class="num stop-col">{_fmt(r['stop'],2)}</td>
+      <td class="num">{_fmt(r['risk_pct'],1,suffix="%")}</td>
+      <td class="num tp1-col">{_fmt(r['tp1'],2)}</td>
+      <td class="num tp2-col">{_fmt(r['tp2'],2)}</td>
+      <td class="num" style="color:{rr_col}">{_fmt(rr_v,2)}</td>
       <td>{pnl_txt}</td>
-      <td>{sma_badge}</td>
-      <td>{ms_badge} {ms_txt}</td>
     </tr>"""
 
+_TABLE_HEADER = """
+  <thead><tr>
+    <th>Ticker</th><th>Tier</th><th>Idx</th><th>Señal</th><th>Stage</th>
+    <th>Mansfield</th><th>Close</th><th>Entry</th><th>Dist%</th>
+    <th>Stop</th><th>Riesgo%</th><th>TP1</th><th>TP2</th><th>R:R</th><th>P&amp;L</th>
+  </tr></thead>"""
 
-def _section_html(df_section, title, icon, color):
-    if df_section.empty:
-        return f"""
-    <div class="section">
-      <div class="section-title" style="color:{color}">{icon} {title} <span class="count">0</span></div>
-      <p class="empty-msg">Sin señales en este momento.</p>
-    </div>"""
+def _table_html(df_s):
+    rows = "".join(_row_html(r) for _, r in df_s.iterrows())
+    return f'<div class="table-wrap"><table>{_TABLE_HEADER}<tbody>{rows}</tbody></table></div>'
 
-    rows = "".join(_row_html(r) for _, r in df_section.iterrows())
-    count = len(df_section)
-    return f"""
-    <div class="section">
-      <div class="section-title" style="color:{color}">{icon} {title}
-        <span class="count">{count}</span>
-      </div>
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Ticker</th><th>Índice</th><th>Señal</th>
-              <th>Close</th><th>Entry</th><th>Dist%</th>
-              <th>Stop</th><th>Riesgo%</th>
-              <th>TP1</th><th>TP2</th><th>R:R</th>
-              <th>P&L</th><th>SMA30</th><th>Mansfield</th>
-            </tr>
-          </thead>
-          <tbody>{rows}</tbody>
-        </table>
-      </div>
-    </div>"""
+def _section_html(df_s, title, icon, color, subtitle=""):
+    sub = f'<div class="sec-sub">{subtitle}</div>' if subtitle else ""
+    if df_s.empty:
+        return (f'<div class="section">'
+                f'<div class="section-title" style="color:{color}">{icon} {title}'
+                f'<span class="count">0</span></div>{sub}'
+                f'<p class="empty-msg">Sin señales en este momento.</p></div>')
+    return (f'<div class="section">'
+            f'<div class="section-title" style="color:{color}">{icon} {title}'
+            f'<span class="count">{len(df_s)}</span></div>{sub}'
+            f'{_table_html(df_s)}</div>')
 
 
 def generate_html(df, run_dt=None):
     if run_dt is None:
         run_dt = datetime.datetime.now()
+    date_str = run_dt.strftime("%Y-%m-%d")
+    time_str = run_dt.strftime("%H:%M")
 
-    date_str  = run_dt.strftime("%Y-%m-%d")
-    time_str  = run_dt.strftime("%H:%M")
+    if df.empty:
+        df2 = df.copy()
+        df2["tier"] = 0
+    else:
+        df2 = df.copy()
+        df2["tier"] = df2.apply(_tier_val, axis=1)
 
-    counts  = df["signal"].value_counts() if not df.empty else {}
-    n_buy   = counts.get("BUY", 0)
-    n_near  = counts.get("NEAR", 0)
-    n_in    = counts.get("IN_TRADE", 0)
-    n_setup = counts.get("SETUP", 0)
-    n_total = len(df)
+    # ── Clasificación igual que Telegram ─────────────────────────────────────
+    # ÓRDENES: BUY + NEAR con tier≥1, dist dentro del 3%
+    ordenes = df2[
+        df2["signal"].isin(["BUY", "NEAR"]) &
+        (df2["dist_pct"] >= -3.0) &
+        (df2["tier"] >= 1)
+    ].sort_values(["tier", "dist_pct"], ascending=[False, True])
 
-    sec_buy   = _section_html(df[df.signal == "BUY"],      "COMPRAS ESTA SEMANA",   "🔥", "#10b981")
-    sec_near  = _section_html(df[df.signal == "NEAR"],     "PRÓXIMAS ENTRADAS",     "👀", "#f59e0b")
-    sec_in    = _section_html(df[df.signal == "IN_TRADE"], "YA EN POSICIÓN",        "📈", "#8b5cf6")
-    sec_setup = _section_html(df[df.signal == "SETUP"],    "SETUPS ACTIVOS",        "📊", "#3b82f6")
+    confluencia = ordenes[ordenes["tier"] == 2]
+    filtro_ok   = ordenes[ordenes["tier"] == 1]
+
+    # VIGILANCIA: SETUP cerca del entry (≤8%), tier≥1
+    vigilancia = df2[
+        (df2["signal"] == "SETUP") &
+        (df2["dist_pct"] <= 8.0) &
+        (df2["tier"] >= 1)
+    ].sort_values("dist_pct")
+
+    # EN POSICIÓN: IN_TRADE con tier≥1
+    en_pos = df2[
+        (df2["signal"] == "IN_TRADE") &
+        (df2["tier"] >= 1)
+    ].sort_values(["tier", "dist_pct"], ascending=[False, True])
+
+    # Stats
+    n_conf = len(confluencia)
+    n_filt = len(filtro_ok)
+    n_vig  = len(vigilancia)
+    n_pos  = len(en_pos)
+    n_ord  = n_conf + n_filt
+
+    # ── Secciones HTML ────────────────────────────────────────────────────────
+    def _ord_section():
+        if n_ord == 0:
+            return ('<div class="section"><div class="section-title" style="color:#10b981">'
+                    '🎯 ÓRDENES A COLOCAR <span class="count">0</span></div>'
+                    '<p class="empty-msg">Sin señales de calidad esta semana. Revisa el sábado que viene.</p></div>')
+        parts = []
+        if n_conf > 0:
+            parts.append(f'<div class="subsec-title">⭐ CONFLUENCIA ({n_conf})'
+                         '<span class="subsec-hint">MS ≥5% + RS en máximos 52s</span></div>'
+                         + _table_html(confluencia))
+        if n_filt > 0:
+            parts.append(f'<div class="subsec-title filt">✅ FILTRO OK ({n_filt})'
+                         '<span class="subsec-hint">MS ≥5%</span></div>'
+                         + _table_html(filtro_ok))
+        inner = "".join(parts)
+        return (f'<div class="section">'
+                f'<div class="section-title" style="color:#10b981">🎯 ÓRDENES A COLOCAR'
+                f'<span class="count">{n_ord}</span></div>'
+                f'<p class="sec-note">Coloca una orden <strong>BUY STOP</strong> al precio ENTRY antes del lunes.</p>'
+                f'{inner}</div>')
+
+    sec_ord = _ord_section()
+    sec_vig = _section_html(vigilancia, "VIGILANCIA — próximas roturas", "👀", "#f59e0b",
+                            '<p class="sec-note">Estructuras formadas. Pueden activarse la próxima semana.</p>')
+    sec_pos = _section_html(en_pos, "YA EN POSICIÓN", "📈", "#8b5cf6",
+                            '<p class="sec-note">Precio ya por encima del entry. Gestiona el stop activo.</p>')
 
     html = f"""<!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ASP-B Screener — {date_str}</title>
+<title>ASP-B Weekly — {date_str}</title>
 <style>
   :root {{
     --bg:#0f172a; --card:#1e293b; --card2:#334155;
     --text:#e2e8f0; --text2:#94a3b8; --border:#334155;
-    --green:#10b981; --red:#ef4444; --orange:#f59e0b;
-    --blue:#3b82f6; --purple:#8b5cf6;
+    --gold:#FFD700; --green:#10b981; --red:#ef4444;
+    --orange:#f59e0b; --blue:#3b82f6; --purple:#8b5cf6;
   }}
-  * {{ margin:0; padding:0; box-sizing:border-box; }}
-  body {{
-    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
-    background:var(--bg); color:var(--text); font-size:13px;
-  }}
-  .header {{
-    background:linear-gradient(135deg,#1e293b 0%,#0f172a 100%);
-    border-bottom:2px solid var(--card2);
-    padding:18px 20px; text-align:center;
-  }}
-  .header h1 {{ font-size:1.4rem; font-weight:700; letter-spacing:1px; }}
-  .header .sub {{ color:var(--text2); font-size:0.78rem; margin-top:4px; }}
+  *{{margin:0;padding:0;box-sizing:border-box}}
+  body{{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+        background:var(--bg);color:var(--text);font-size:13px}}
 
-  /* STAT CARDS */
-  .stats-bar {{
-    display:flex; gap:10px; flex-wrap:wrap;
-    padding:14px 20px; background:var(--card);
-    border-bottom:1px solid var(--border);
-    justify-content:center;
-  }}
-  .stat-card {{
-    text-align:center; min-width:90px; padding:10px 16px;
-    border-radius:10px; background:var(--bg); border:1px solid var(--border);
-  }}
-  .stat-card .v {{ font-size:1.6rem; font-weight:800; }}
-  .stat-card .l {{ font-size:0.65rem; color:var(--text2); text-transform:uppercase; margin-top:2px; }}
-  .v-buy   {{ color:var(--green); }}
-  .v-near  {{ color:var(--orange); }}
-  .v-in    {{ color:var(--purple); }}
-  .v-setup {{ color:var(--blue); }}
-  .v-total {{ color:var(--text); }}
+  /* HEADER */
+  .header{{background:linear-gradient(135deg,#1e293b 0%,#0f172a 100%);
+           border-bottom:2px solid #FFD70040;padding:20px;text-align:center}}
+  .header h1{{font-size:1.5rem;font-weight:800;letter-spacing:1px;
+              background:linear-gradient(90deg,#FFD700,#10b981);
+              -webkit-background-clip:text;-webkit-text-fill-color:transparent}}
+  .header .sub{{color:var(--text2);font-size:0.8rem;margin-top:5px}}
 
-  .container {{ max-width:1400px; margin:0 auto; padding:16px 12px; }}
+  /* STATS */
+  .stats-bar{{display:flex;gap:12px;flex-wrap:wrap;padding:16px 20px;
+              background:var(--card);border-bottom:1px solid var(--border);
+              justify-content:center}}
+  .stat-card{{text-align:center;min-width:100px;padding:12px 18px;
+              border-radius:12px;background:var(--bg);border:1px solid var(--border)}}
+  .stat-card .v{{font-size:1.8rem;font-weight:800}}
+  .stat-card .l{{font-size:0.65rem;color:var(--text2);text-transform:uppercase;margin-top:3px}}
+  .v-conf{{color:var(--gold)}} .v-filt{{color:var(--green)}}
+  .v-vig{{color:var(--orange)}} .v-pos{{color:var(--purple)}}
 
-  /* SECTIONS */
-  .section {{ margin-bottom:28px; }}
-  .section-title {{
-    font-size:0.95rem; font-weight:700; letter-spacing:.5px;
-    padding:8px 12px; border-radius:6px 6px 0 0;
-    background:rgba(255,255,255,.03); border-bottom:1px solid var(--border);
-    display:flex; align-items:center; gap:8px;
-  }}
-  .count {{
-    background:rgba(255,255,255,.1); border-radius:12px;
-    padding:1px 8px; font-size:0.75rem; font-weight:600;
-  }}
-  .empty-msg {{ color:var(--text2); padding:16px; font-size:0.85rem; }}
+  /* CONTAINER */
+  .container{{max-width:1500px;margin:0 auto;padding:20px 14px}}
+
+  /* SECTION */
+  .section{{margin-bottom:32px;border-radius:8px;
+            border:1px solid var(--border);overflow:hidden}}
+  .section-title{{font-size:1rem;font-weight:700;padding:10px 14px;
+                  background:rgba(255,255,255,.04);border-bottom:1px solid var(--border);
+                  display:flex;align-items:center;gap:10px}}
+  .count{{background:rgba(255,255,255,.12);border-radius:12px;
+          padding:2px 10px;font-size:0.75rem;font-weight:600}}
+  .sec-note{{font-size:0.78rem;color:var(--text2);padding:6px 14px 4px;
+             border-bottom:1px solid var(--border)}}
+  .subsec-title{{font-size:0.85rem;font-weight:700;padding:8px 14px;
+                 background:rgba(255,215,0,.06);color:var(--gold);
+                 border-top:1px solid #FFD70020;border-bottom:1px solid #FFD70020;
+                 display:flex;align-items:center;gap:8px}}
+  .subsec-title.filt{{background:rgba(16,185,129,.06);color:var(--green);
+                      border-top-color:#10b98120;border-bottom-color:#10b98120}}
+  .subsec-hint{{font-size:0.68rem;font-weight:400;color:var(--text2)}}
+  .empty-msg{{color:var(--text2);padding:18px 14px;font-size:0.85rem}}
 
   /* TABLE */
-  .table-wrap {{ overflow-x:auto; }}
-  table {{ width:100%; border-collapse:collapse; min-width:900px; }}
-  thead tr {{ background:var(--card2); }}
-  th {{
-    padding:8px 10px; text-align:right;
-    color:var(--text2); font-size:0.7rem; font-weight:600;
-    text-transform:uppercase; letter-spacing:.5px;
-    border-bottom:1px solid var(--border); white-space:nowrap;
-  }}
-  th:first-child, th:nth-child(2), th:nth-child(3) {{ text-align:left; }}
-  td {{ padding:7px 10px; border-bottom:1px solid rgba(51,65,85,.5); vertical-align:middle; }}
-  tr:hover {{ background:rgba(255,255,255,.03); }}
-  .num {{ text-align:right; font-variant-numeric:tabular-nums; }}
-  .ticker-cell {{ font-size:0.9rem; font-weight:600; white-space:nowrap; }}
-  .entry-col {{ color:#60a5fa; }}
-  .stop-col  {{ color:#fca5a5; }}
-  .tp1-col   {{ color:#6ee7b7; }}
-  .tp2-col   {{ color:#a7f3d0; }}
+  .table-wrap{{overflow-x:auto}}
+  table{{width:100%;border-collapse:collapse;min-width:1000px}}
+  thead tr{{background:var(--card2)}}
+  th{{padding:7px 10px;text-align:right;color:var(--text2);font-size:0.68rem;
+      font-weight:600;text-transform:uppercase;letter-spacing:.4px;
+      border-bottom:1px solid var(--border);white-space:nowrap}}
+  th:first-child,th:nth-child(2),th:nth-child(3),th:nth-child(4),th:nth-child(5){{text-align:left}}
+  td{{padding:8px 10px;border-bottom:1px solid rgba(51,65,85,.4);vertical-align:middle}}
+  tr:hover{{background:rgba(255,255,255,.025)}}
+  .num{{text-align:right;font-variant-numeric:tabular-nums}}
+  .ticker-cell{{font-size:0.95rem;font-weight:700;white-space:nowrap}}
+  .entry-col{{color:#60a5fa;font-weight:600}}
+  .stop-col{{color:#fca5a5}}
+  .tp1-col{{color:#6ee7b7}}
+  .tp2-col{{color:#a7f3d0}}
 
   /* BADGES */
-  .badge {{
-    display:inline-block; padding:2px 8px; border-radius:4px;
-    font-size:0.7rem; font-weight:700; white-space:nowrap;
-  }}
-  .badge.buy   {{ background:rgba(16,185,129,.2); color:#10b981; border:1px solid #10b98140; }}
-  .badge.near  {{ background:rgba(245,158,11,.2); color:#f59e0b; border:1px solid #f59e0b40; }}
-  .badge.in    {{ background:rgba(139,92,246,.2); color:#a78bfa; border:1px solid #8b5cf640; }}
-  .badge.setup {{ background:rgba(59,130,246,.2); color:#60a5fa; border:1px solid #3b82f640; }}
+  .badge{{display:inline-block;padding:2px 7px;border-radius:4px;
+          font-size:0.68rem;font-weight:700;white-space:nowrap}}
+  .badge.buy{{background:rgba(16,185,129,.2);color:#10b981;border:1px solid #10b98130}}
+  .badge.near{{background:rgba(245,158,11,.2);color:#f59e0b;border:1px solid #f59e0b30}}
+  .badge.in{{background:rgba(139,92,246,.2);color:#a78bfa;border:1px solid #8b5cf630}}
+  .badge.setup{{background:rgba(59,130,246,.2);color:#60a5fa;border:1px solid #3b82f630}}
 
-  .mini-badge {{
-    display:inline-block; padding:2px 6px; border-radius:4px;
-    font-size:0.65rem; font-weight:700;
-  }}
-  .badge-ok   {{ background:rgba(16,185,129,.15); color:#10b981; }}
-  .badge-ko   {{ background:rgba(239,68,68,.15);  color:#ef4444; }}
-  .badge-warn {{ background:rgba(245,158,11,.15); color:#f59e0b; font-size:0.65rem; padding:2px 5px; border-radius:4px; }}
+  .tier-badge{{display:inline-block;padding:2px 8px;border-radius:4px;
+               font-size:0.68rem;font-weight:700;white-space:nowrap}}
+  .tier-c{{background:rgba(255,215,0,.15);color:#FFD700;border:1px solid #FFD70030}}
+  .tier-f{{background:rgba(16,185,129,.15);color:#10b981;border:1px solid #10b98130}}
+  .tier-n{{color:#475569;font-size:0.65rem}}
 
-  .idx-sp {{ color:#60a5fa; font-size:0.7rem; font-weight:600; }}
-  .idx-nq {{ color:#a78bfa; font-size:0.7rem; font-weight:600; }}
+  .mini-badge{{display:inline-block;padding:2px 6px;border-radius:4px;font-size:0.65rem;font-weight:700}}
+  .badge-ok{{background:rgba(16,185,129,.15);color:#10b981}}
+  .badge-ko{{background:rgba(239,68,68,.15);color:#ef4444}}
+  .badge-warn{{background:rgba(245,158,11,.15);color:#f59e0b}}
+  .idx-sp{{color:#60a5fa;font-size:0.68rem;font-weight:600}}
+  .idx-nq{{color:#a78bfa;font-size:0.68rem;font-weight:600}}
+  .idx-eu{{color:#f59e0b;font-size:0.68rem;font-weight:600}}
 
-  .footer {{
-    text-align:center; color:var(--text2); font-size:0.7rem;
-    padding:20px; border-top:1px solid var(--border); margin-top:20px;
-  }}
+  /* FOOTER */
+  .footer{{text-align:center;color:var(--text2);font-size:0.7rem;
+           padding:20px;border-top:1px solid var(--border);margin-top:24px}}
 </style>
 </head>
 <body>
 
 <div class="header">
   <h1>⚡ ASP-B Weekly Screener</h1>
-  <div class="sub">S&amp;P 500 · NASDAQ 100 — {date_str} · Actualizado {time_str}</div>
+  <div class="sub">Estrategia Oratnek · S&amp;P 500 · NASDAQ · EU-ADR — {date_str} · {time_str}</div>
 </div>
 
 <div class="stats-bar">
-  <div class="stat-card"><div class="v v-buy">{n_buy}</div><div class="l">🔥 Compras</div></div>
-  <div class="stat-card"><div class="v v-near">{n_near}</div><div class="l">👀 Próximas</div></div>
-  <div class="stat-card"><div class="v v-in">{n_in}</div><div class="l">📈 En posición</div></div>
-  <div class="stat-card"><div class="v v-setup">{n_setup}</div><div class="l">📊 Setups</div></div>
-  <div class="stat-card"><div class="v v-total">{n_total}</div><div class="l">Total</div></div>
+  <div class="stat-card"><div class="v v-conf">{n_conf}</div><div class="l">⭐ Confluencia</div></div>
+  <div class="stat-card"><div class="v v-filt">{n_filt}</div><div class="l">✅ Filtro OK</div></div>
+  <div class="stat-card"><div class="v v-vig">{n_vig}</div><div class="l">👀 Vigilancia</div></div>
+  <div class="stat-card"><div class="v v-pos">{n_pos}</div><div class="l">📈 En posición</div></div>
 </div>
 
 <div class="container">
-  {sec_buy}
-  {sec_near}
-  {sec_in}
-  {sec_setup}
+  {sec_ord}
+  {sec_vig}
+  {sec_pos}
 </div>
 
 <div class="footer">
-  ASP-B Weekly Strategy v2 · Pivot lengths {MIN_LEN}–{MAX_LEN} · EMA{EMA_LEN} · Fib 0.618 / 1.764 / 2.618<br>
-  Stop = 1st Pivot (Fib 0.618) · TP1 = Fib 1.764 · Mansfield RS vs SPY (MA{MS_MA_LEN}w)<br>
+  ASP-B Weekly Strategy v2 · Estrategia Oratnek · Pivot lengths {MIN_LEN}–{MAX_LEN} · EMA{EMA_LEN}<br>
+  Fib Stop 0.618 · TP1 1.764 · TP2 2.618 · Mansfield RS vs SPY (MA{MS_MA_LEN}w) · MS ≥5% · Stage 2 · TP1 ≥7% · Stop ≥3%<br>
   <em>No constituye asesoramiento financiero. Verificar siempre en gráfico semanal.</em>
 </div>
-
 </body>
 </html>"""
 
