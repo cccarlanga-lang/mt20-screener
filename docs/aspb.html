@@ -1,0 +1,2182 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ASP-B Screener — 2026-06-17</title>
+<style>
+  :root {
+    --bg:#0f172a; --card:#1e293b; --card2:#334155;
+    --text:#e2e8f0; --text2:#94a3b8; --border:#334155;
+    --green:#10b981; --red:#ef4444; --orange:#f59e0b;
+    --blue:#3b82f6; --purple:#8b5cf6;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+    background:var(--bg); color:var(--text); font-size:13px;
+  }
+  .header {
+    background:linear-gradient(135deg,#1e293b 0%,#0f172a 100%);
+    border-bottom:2px solid var(--card2);
+    padding:18px 20px; text-align:center;
+  }
+  .header h1 { font-size:1.4rem; font-weight:700; letter-spacing:1px; }
+  .header .sub { color:var(--text2); font-size:0.78rem; margin-top:4px; }
+
+  /* STAT CARDS */
+  .stats-bar {
+    display:flex; gap:10px; flex-wrap:wrap;
+    padding:14px 20px; background:var(--card);
+    border-bottom:1px solid var(--border);
+    justify-content:center;
+  }
+  .stat-card {
+    text-align:center; min-width:90px; padding:10px 16px;
+    border-radius:10px; background:var(--bg); border:1px solid var(--border);
+  }
+  .stat-card .v { font-size:1.6rem; font-weight:800; }
+  .stat-card .l { font-size:0.65rem; color:var(--text2); text-transform:uppercase; margin-top:2px; }
+  .v-buy   { color:var(--green); }
+  .v-near  { color:var(--orange); }
+  .v-in    { color:var(--purple); }
+  .v-setup { color:var(--blue); }
+  .v-total { color:var(--text); }
+
+  .container { max-width:1400px; margin:0 auto; padding:16px 12px; }
+
+  /* SECTIONS */
+  .section { margin-bottom:28px; }
+  .section-title {
+    font-size:0.95rem; font-weight:700; letter-spacing:.5px;
+    padding:8px 12px; border-radius:6px 6px 0 0;
+    background:rgba(255,255,255,.03); border-bottom:1px solid var(--border);
+    display:flex; align-items:center; gap:8px;
+  }
+  .count {
+    background:rgba(255,255,255,.1); border-radius:12px;
+    padding:1px 8px; font-size:0.75rem; font-weight:600;
+  }
+  .empty-msg { color:var(--text2); padding:16px; font-size:0.85rem; }
+
+  /* TABLE */
+  .table-wrap { overflow-x:auto; }
+  table { width:100%; border-collapse:collapse; min-width:900px; }
+  thead tr { background:var(--card2); }
+  th {
+    padding:8px 10px; text-align:right;
+    color:var(--text2); font-size:0.7rem; font-weight:600;
+    text-transform:uppercase; letter-spacing:.5px;
+    border-bottom:1px solid var(--border); white-space:nowrap;
+  }
+  th:first-child, th:nth-child(2), th:nth-child(3) { text-align:left; }
+  td { padding:7px 10px; border-bottom:1px solid rgba(51,65,85,.5); vertical-align:middle; }
+  tr:hover { background:rgba(255,255,255,.03); }
+  .num { text-align:right; font-variant-numeric:tabular-nums; }
+  .ticker-cell { font-size:0.9rem; font-weight:600; white-space:nowrap; }
+  .entry-col { color:#60a5fa; }
+  .stop-col  { color:#fca5a5; }
+  .tp1-col   { color:#6ee7b7; }
+  .tp2-col   { color:#a7f3d0; }
+
+  /* BADGES */
+  .badge {
+    display:inline-block; padding:2px 8px; border-radius:4px;
+    font-size:0.7rem; font-weight:700; white-space:nowrap;
+  }
+  .badge.buy   { background:rgba(16,185,129,.2); color:#10b981; border:1px solid #10b98140; }
+  .badge.near  { background:rgba(245,158,11,.2); color:#f59e0b; border:1px solid #f59e0b40; }
+  .badge.in    { background:rgba(139,92,246,.2); color:#a78bfa; border:1px solid #8b5cf640; }
+  .badge.setup { background:rgba(59,130,246,.2); color:#60a5fa; border:1px solid #3b82f640; }
+
+  .mini-badge {
+    display:inline-block; padding:2px 6px; border-radius:4px;
+    font-size:0.65rem; font-weight:700;
+  }
+  .badge-ok   { background:rgba(16,185,129,.15); color:#10b981; }
+  .badge-ko   { background:rgba(239,68,68,.15);  color:#ef4444; }
+  .badge-warn { background:rgba(245,158,11,.15); color:#f59e0b; font-size:0.65rem; padding:2px 5px; border-radius:4px; }
+
+  .idx-sp { color:#60a5fa; font-size:0.7rem; font-weight:600; }
+  .idx-nq { color:#a78bfa; font-size:0.7rem; font-weight:600; }
+
+  .footer {
+    text-align:center; color:var(--text2); font-size:0.7rem;
+    padding:20px; border-top:1px solid var(--border); margin-top:20px;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>⚡ ASP-B Weekly Screener</h1>
+  <div class="sub">S&amp;P 500 · NASDAQ 100 — 2026-06-17 · Actualizado 19:01</div>
+</div>
+
+<div class="stats-bar">
+  <div class="stat-card"><div class="v v-buy">3</div><div class="l">🔥 Compras</div></div>
+  <div class="stat-card"><div class="v v-near">8</div><div class="l">👀 Próximas</div></div>
+  <div class="stat-card"><div class="v v-in">79</div><div class="l">📈 En posición</div></div>
+  <div class="stat-card"><div class="v v-setup">33</div><div class="l">📊 Setups</div></div>
+  <div class="stat-card"><div class="v v-total">123</div><div class="l">Total</div></div>
+</div>
+
+<div class="container">
+  
+    <div class="section">
+      <div class="section-title" style="color:#10b981">🔥 COMPRAS ESTA SEMANA
+        <span class="count">3</span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Ticker</th><th>Índice</th><th>Señal</th>
+              <th>Close</th><th>Entry</th><th>Dist%</th>
+              <th>Stop</th><th>Riesgo%</th>
+              <th>TP1</th><th>TP2</th><th>R:R</th>
+              <th>P&L</th><th>SMA30</th><th>Mansfield</th>
+            </tr>
+          </thead>
+          <tbody>
+    <tr style="border-left: 3px solid #10b981;">
+      <td class="ticker-cell"><strong>ETSY</strong> </td>
+      <td><span class="idx-sp">SP500</span></td>
+      <td><span class="badge buy">🔥 BUY</span></td>
+      <td class="num">73.34</td>
+      <td class="num entry-col">70.88</td>
+      <td class="num"><span style="color:#f59e0b">-3.5%</span></td>
+      <td class="num stop-col">65.31</td>
+      <td class="num">7.9%</td>
+      <td class="num tp1-col">82.03</td>
+      <td class="num tp2-col">94.49</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td>—</td>
+      <td><span class="mini-badge badge-ok">SMA30↑</span></td>
+      <td><span class="mini-badge badge-ok">MS+</span> <span style="color:#10b981">11.0%</span></td>
+    </tr>
+    <tr style="border-left: 3px solid #10b981;">
+      <td class="ticker-cell"><strong>CAT</strong> </td>
+      <td><span class="idx-sp">SP500</span></td>
+      <td><span class="badge buy">🔥 BUY</span></td>
+      <td class="num">945.46</td>
+      <td class="num entry-col">931.35</td>
+      <td class="num"><span style="color:#f59e0b">-1.5%</span></td>
+      <td class="num stop-col">898.57</td>
+      <td class="num">3.5%</td>
+      <td class="num tp1-col">996.90</td>
+      <td class="num tp2-col">1,070.17</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td>—</td>
+      <td><span class="mini-badge badge-ok">SMA30↑</span></td>
+      <td><span class="mini-badge badge-ok">MS+</span> <span style="color:#10b981">38.4%</span></td>
+    </tr>
+    <tr style="border-left: 3px solid #10b981;">
+      <td class="ticker-cell"><strong>EMR</strong> <span class="mini-badge badge-warn" title="Hubo un breakout fallido previo">⚠️ FBrk</span></td>
+      <td><span class="idx-sp">SP500</span></td>
+      <td><span class="badge buy">🔥 BUY</span></td>
+      <td class="num">148.81</td>
+      <td class="num entry-col">147.86</td>
+      <td class="num"><span style="color:#10b981">-0.6%</span></td>
+      <td class="num stop-col">137.88</td>
+      <td class="num">6.8%</td>
+      <td class="num tp1-col">167.83</td>
+      <td class="num tp2-col">190.15</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td>—</td>
+      <td><span class="mini-badge badge-ok">SMA30↑</span></td>
+      <td><span class="mini-badge badge-ko">MS−</span> <span style="color:#ef4444">-2.3%</span></td>
+    </tr></tbody>
+        </table>
+      </div>
+    </div>
+  
+    <div class="section">
+      <div class="section-title" style="color:#f59e0b">👀 PRÓXIMAS ENTRADAS
+        <span class="count">8</span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Ticker</th><th>Índice</th><th>Señal</th>
+              <th>Close</th><th>Entry</th><th>Dist%</th>
+              <th>Stop</th><th>Riesgo%</th>
+              <th>TP1</th><th>TP2</th><th>R:R</th>
+              <th>P&L</th><th>SMA30</th><th>Mansfield</th>
+            </tr>
+          </thead>
+          <tbody>
+    <tr style="border-left: 3px solid #f59e0b;">
+      <td class="ticker-cell"><strong>MOH</strong> </td>
+      <td><span class="idx-sp">SP500</span></td>
+      <td><span class="badge near">👀 NEAR</span></td>
+      <td class="num">200.21</td>
+      <td class="num entry-col">200.55</td>
+      <td class="num"><span style="color:#10b981">0.2%</span></td>
+      <td class="num stop-col">189.92</td>
+      <td class="num">5.3%</td>
+      <td class="num tp1-col">221.82</td>
+      <td class="num tp2-col">245.60</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td>—</td>
+      <td><span class="mini-badge badge-ok">SMA30↑</span></td>
+      <td><span class="mini-badge badge-ok">MS+</span> <span style="color:#10b981">3.7%</span></td>
+    </tr>
+    <tr style="border-left: 3px solid #f59e0b;">
+      <td class="ticker-cell"><strong>WELL</strong> <span class="mini-badge badge-warn" title="Hubo un breakout fallido previo">⚠️ FBrk</span></td>
+      <td><span class="idx-sp">SP500</span></td>
+      <td><span class="badge near">👀 NEAR</span></td>
+      <td class="num">213.50</td>
+      <td class="num entry-col">214.93</td>
+      <td class="num"><span style="color:#10b981">0.7%</span></td>
+      <td class="num stop-col">206.17</td>
+      <td class="num">4.1%</td>
+      <td class="num tp1-col">232.45</td>
+      <td class="num tp2-col">252.03</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td>—</td>
+      <td><span class="mini-badge badge-ok">SMA30↑</span></td>
+      <td><span class="mini-badge badge-ok">MS+</span> <span style="color:#10b981">2.7%</span></td>
+    </tr>
+    <tr style="border-left: 3px solid #f59e0b;">
+      <td class="ticker-cell"><strong>GLW</strong> <span class="mini-badge badge-warn" title="Hubo un breakout fallido previo">⚠️ FBrk</span></td>
+      <td><span class="idx-sp">SP500</span></td>
+      <td><span class="badge near">👀 NEAR</span></td>
+      <td class="num">177.42</td>
+      <td class="num entry-col">178.81</td>
+      <td class="num"><span style="color:#10b981">0.8%</span></td>
+      <td class="num stop-col">167.02</td>
+      <td class="num">6.6%</td>
+      <td class="num tp1-col">202.39</td>
+      <td class="num tp2-col">228.74</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td>—</td>
+      <td><span class="mini-badge badge-ok">SMA30↑</span></td>
+      <td><span class="mini-badge badge-ok">MS+</span> <span style="color:#10b981">49.8%</span></td>
+    </tr>
+    <tr style="border-left: 3px solid #f59e0b;">
+      <td class="ticker-cell"><strong>ODFL</strong> <span class="mini-badge badge-warn" title="Hubo un breakout fallido previo">⚠️ FBrk</span></td>
+      <td><span class="idx-sp">SP500</span></td>
+      <td><span class="badge near">👀 NEAR</span></td>
+      <td class="num">231.62</td>
+      <td class="num entry-col">233.49</td>
+      <td class="num"><span style="color:#10b981">0.8%</span></td>
+      <td class="num stop-col">215.60</td>
+      <td class="num">7.7%</td>
+      <td class="num tp1-col">269.28</td>
+      <td class="num tp2-col">309.28</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td>—</td>
+      <td><span class="mini-badge badge-ok">SMA30↑</span></td>
+      <td><span class="mini-badge badge-ok">MS+</span> <span style="color:#10b981">20.8%</span></td>
+    </tr>
+    <tr style="border-left: 3px solid #f59e0b;">
+      <td class="ticker-cell"><strong>FCX</strong> </td>
+      <td><span class="idx-sp">SP500</span></td>
+      <td><span class="badge near">👀 NEAR</span></td>
+      <td class="num">70.15</td>
+      <td class="num entry-col">70.97</td>
+      <td class="num"><span style="color:#10b981">1.2%</span></td>
+      <td class="num stop-col">65.06</td>
+      <td class="num">8.3%</td>
+      <td class="num tp1-col">82.80</td>
+      <td class="num tp2-col">96.02</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td>—</td>
+      <td><span class="mini-badge badge-ok">SMA30↑</span></td>
+      <td><span class="mini-badge badge-ok">MS+</span> <span style="color:#10b981">22.0%</span></td>
+    </tr>
+    <tr style="border-left: 3px solid #f59e0b;">
+      <td class="ticker-cell"><strong>JCI</strong> </td>
+      <td><span class="idx-sp">SP500</span></td>
+      <td><span class="badge near">👀 NEAR</span></td>
+      <td class="num">144.77</td>
+      <td class="num entry-col">146.91</td>
+      <td class="num"><span style="color:#10b981">1.5%</span></td>
+      <td class="num stop-col">140.82</td>
+      <td class="num">4.1%</td>
+      <td class="num tp1-col">159.10</td>
+      <td class="num tp2-col">172.73</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td>—</td>
+      <td><span class="mini-badge badge-ok">SMA30↑</span></td>
+      <td><span class="mini-badge badge-ok">MS+</span> <span style="color:#10b981">7.3%</span></td>
+    </tr>
+    <tr style="border-left: 3px solid #f59e0b;">
+      <td class="ticker-cell"><strong>ALLY</strong> </td>
+      <td><span class="idx-sp">SP500</span></td>
+      <td><span class="badge near">👀 NEAR</span></td>
+      <td class="num">45.66</td>
+      <td class="num entry-col">46.70</td>
+      <td class="num"><span style="color:#f59e0b">2.2%</span></td>
+      <td class="num stop-col">44.38</td>
+      <td class="num">5.0%</td>
+      <td class="num tp1-col">51.35</td>
+      <td class="num tp2-col">56.54</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td>—</td>
+      <td><span class="mini-badge badge-ok">SMA30↑</span></td>
+      <td><span class="mini-badge badge-ok">MS+</span> <span style="color:#10b981">0.7%</span></td>
+    </tr>
+    <tr style="border-left: 3px solid #f59e0b;">
+      <td class="ticker-cell"><strong>VRSN</strong> <span class="mini-badge badge-warn" title="Hubo un breakout fallido previo">⚠️ FBrk</span></td>
+      <td><span class="idx-sp">SP500</span></td>
+      <td><span class="badge near">👀 NEAR</span></td>
+      <td class="num">273.87</td>
+      <td class="num entry-col">281.78</td>
+      <td class="num"><span style="color:#f59e0b">2.8%</span></td>
+      <td class="num stop-col">270.72</td>
+      <td class="num">3.9%</td>
+      <td class="num tp1-col">303.89</td>
+      <td class="num tp2-col">328.61</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td>—</td>
+      <td><span class="mini-badge badge-ok">SMA30↑</span></td>
+      <td><span class="mini-badge badge-ko">MS−</span> <span style="color:#ef4444">-5.8%</span></td>
+    </tr></tbody>
+        </table>
+      </div>
+    </div>
+  
+    <div class="section">
+      <div class="section-title" style="color:#8b5cf6">📈 YA EN POSICIÓN
+        <span class="count">79</span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Ticker</th><th>Índice</th><th>Señal</th>
+              <th>Close</th><th>Entry</th><th>Dist%</th>
+              <th>Stop</th><th>Riesgo%</th>
+              <th>TP1</th><th>TP2</th><th>R:R</th>
+              <th>P&L</th><th>SMA30</th><th>Mansfield</th>
+            </tr>
+          </thead>
+          <tbody>
+    <tr style="border-left: 3px solid #8b5cf6;">
+      <td class="ticker-cell"><strong>MU</strong> </td>
+      <td><span class="idx-sp">SP500</span></td>
+      <td><span class="badge in">📈 IN</span></td>
+      <td class="num">1,020.76</td>
+      <td class="num entry-col">264.53</td>
+      <td class="num"><span style="color:#94a3b8">-285.9%</span></td>
+      <td class="num stop-col">248.10</td>
+      <td class="num">6.2%</td>
+      <td class="num tp1-col">297.40</td>
+      <td class="num tp2-col">334.15</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td><span style="color:#10b981">285.9%</span></td>
+      <td><span class="mini-badge badge-ok">SMA30↑</span></td>
+      <td><span class="mini-badge badge-ok">MS+</span> <span style="color:#10b981">170.8%</span></td>
+    </tr>
+    <tr style="border-left: 3px solid #8b5cf6;">
+      <td class="ticker-cell"><strong>AMD</strong> </td>
+      <td><span class="idx-sp">SP500</span></td>
+      <td><span class="badge in">📈 IN</span></td>
+      <td class="num">507.29</td>
+      <td class="num entry-col">186.65</td>
+      <td class="num"><span style="color:#94a3b8">-171.8%</span></td>
+      <td class="num stop-col">172.35</td>
+      <td class="num">7.7%</td>
+      <td class="num tp1-col">215.25</td>
+      <td class="num tp2-col">247.21</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td><span style="color:#10b981">171.8%</span></td>
+      <td><span class="mini-badge badge-ok">SMA30↑</span></td>
+      <td><span class="mini-badge badge-ok">MS+</span> <span style="color:#10b981">90.4%</span></td>
+    </tr>
+    <tr style="border-left: 3px solid #8b5cf6;">
+      <td class="ticker-cell"><strong>HPE</strong> <span class="mini-badge badge-warn" title="Hubo un breakout fallido previo">⚠️ FBrk</span></td>
+      <td><span class="idx-sp">SP500</span></td>
+      <td><span class="badge in">📈 IN</span></td>
+      <td class="num">48.24</td>
+      <td class="num entry-col">21.28</td>
+      <td class="num"><span style="color:#94a3b8">-126.7%</span></td>
+      <td class="num stop-col">20.50</td>
+      <td class="num">3.7%</td>
+      <td class="num tp1-col">22.84</td>
+      <td class="num tp2-col">24.58</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td><span style="color:#10b981">126.7%</span></td>
+      <td><span class="mini-badge badge-ok">SMA30↑</span></td>
+      <td><span class="mini-badge badge-ok">MS+</span> <span style="color:#10b981">74.0%</span></td>
+    </tr>
+    <tr style="border-left: 3px solid #8b5cf6;">
+      <td class="ticker-cell"><strong>STM</strong> </td>
+      <td><span class="idx-nq">NASDAQ</span></td>
+      <td><span class="badge in">📈 IN</span></td>
+      <td class="num">74.55</td>
+      <td class="num entry-col">34.97</td>
+      <td class="num"><span style="color:#94a3b8">-113.2%</span></td>
+      <td class="num stop-col">33.18</td>
+      <td class="num">5.1%</td>
+      <td class="num tp1-col">38.54</td>
+      <td class="num tp2-col">42.54</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td><span style="color:#10b981">113.2%</span></td>
+      <td><span class="mini-badge badge-ok">SMA30↑</span></td>
+      <td><span class="mini-badge badge-ok">MS+</span> <span style="color:#10b981">94.4%</span></td>
+    </tr>
+    <tr style="border-left: 3px solid #8b5cf6;">
+      <td class="ticker-cell"><strong>WDC</strong> </td>
+      <td><span class="idx-sp">SP500</span></td>
+      <td><span class="badge in">📈 IN</span></td>
+      <td class="num">681.08</td>
+      <td class="num entry-col">319.54</td>
+      <td class="num"><span style="color:#94a3b8">-113.1%</span></td>
+      <td class="num stop-col">292.59</td>
+      <td class="num">8.4%</td>
+      <td class="num tp1-col">373.43</td>
+      <td class="num tp2-col">433.67</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td><span style="color:#10b981">113.1%</span></td>
+      <td><span class="mini-badge badge-ok">SMA30↑</span></td>
+      <td><span class="mini-badge badge-ok">MS+</span> <span style="color:#10b981">173.4%</span></td>
+    </tr>
+    <tr style="border-left: 3px solid #8b5cf6;">
+      <td class="ticker-cell"><strong>PANW</strong> </td>
+      <td><span class="idx-sp">SP500</span></td>
+      <td><span class="badge in">📈 IN</span></td>
+      <td class="num">279.90</td>
+      <td class="num entry-col">132.95</td>
+      <td class="num"><span style="color:#94a3b8">-110.5%</span></td>
+      <td class="num stop-col">126.82</td>
+      <td class="num">4.6%</td>
+      <td class="num tp1-col">145.21</td>
+      <td class="num tp2-col">158.91</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td><span style="color:#10b981">110.5%</span></td>
+      <td><span class="mini-badge badge-ok">SMA30↑</span></td>
+      <td><span class="mini-badge badge-ok">MS+</span> <span style="color:#10b981">29.1%</span></td>
+    </tr>
+    <tr style="border-left: 3px solid #8b5cf6;">
+      <td class="ticker-cell"><strong>FLEX</strong> </td>
+      <td><span class="idx-nq">NASDAQ</span></td>
+      <td><span class="badge in">📈 IN</span></td>
+      <td class="num">146.93</td>
+      <td class="num entry-col">70.74</td>
+      <td class="num"><span style="color:#94a3b8">-107.7%</span></td>
+      <td class="num stop-col">66.75</td>
+      <td class="num">5.6%</td>
+      <td class="num tp1-col">78.72</td>
+      <td class="num tp2-col">87.65</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td><span style="color:#10b981">107.7%</span></td>
+      <td><span class="mini-badge badge-ok">SMA30↑</span></td>
+      <td><span class="mini-badge badge-ok">MS+</span> <span style="color:#10b981">84.5%</span></td>
+    </tr>
+    <tr style="border-left: 3px solid #8b5cf6;">
+      <td class="ticker-cell"><strong>CAH</strong> <span class="mini-badge badge-warn" title="Hubo un breakout fallido previo">⚠️ FBrk</span></td>
+      <td><span class="idx-sp">SP500</span></td>
+      <td><span class="badge in">📈 IN</span></td>
+      <td class="num">227.72</td>
+      <td class="num entry-col">123.83</td>
+      <td class="num"><span style="color:#94a3b8">-83.9%</span></td>
+      <td class="num stop-col">119.47</td>
+      <td class="num">3.5%</td>
+      <td class="num tp1-col">132.55</td>
+      <td class="num tp2-col">142.29</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td><span style="color:#10b981">83.9%</span></td>
+      <td><span class="mini-badge badge-ok">SMA30↑</span></td>
+      <td><span class="mini-badge badge-ok">MS+</span> <span style="color:#10b981">8.2%</span></td>
+    </tr>
+    <tr style="border-left: 3px solid #8b5cf6;">
+      <td class="ticker-cell"><strong>LLY</strong> </td>
+      <td><span class="idx-sp">SP500</span></td>
+      <td><span class="badge in">📈 IN</span></td>
+      <td class="num">1,122.50</td>
+      <td class="num entry-col">613.99</td>
+      <td class="num"><span style="color:#94a3b8">-82.8%</span></td>
+      <td class="num stop-col">590.31</td>
+      <td class="num">3.9%</td>
+      <td class="num tp1-col">661.34</td>
+      <td class="num tp2-col">714.27</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td><span style="color:#10b981">82.8%</span></td>
+      <td><span class="mini-badge badge-ok">SMA30↑</span></td>
+      <td><span class="mini-badge badge-ok">MS+</span> <span style="color:#10b981">9.5%</span></td>
+    </tr>
+    <tr style="border-left: 3px solid #8b5cf6;">
+      <td class="ticker-cell"><strong>FSLR</strong> <span class="mini-badge badge-warn" title="Hubo un breakout fallido previo">⚠️ FBrk</span></td>
+      <td><span class="idx-sp">SP500</span></td>
+      <td><span class="badge in">📈 IN</span></td>
+      <td class="num">264.36</td>
+      <td class="num entry-col">145.74</td>
+      <td class="num"><span style="color:#94a3b8">-81.4%</span></td>
+      <td class="num stop-col">134.25</td>
+      <td class="num">7.9%</td>
+      <td class="num tp1-col">168.72</td>
+      <td class="num tp2-col">194.41</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td><span style="color:#10b981">81.4%</span></td>
+      <td><span class="mini-badge badge-ok">SMA30↑</span></td>
+      <td><span class="mini-badge badge-ok">MS+</span> <span style="color:#10b981">6.3%</span></td>
+    </tr>
+    <tr style="border-left: 3px solid #8b5cf6;">
+      <td class="ticker-cell"><strong>SYF</strong> <span class="mini-badge badge-warn" title="Hubo un breakout fallido previo">⚠️ FBrk</span></td>
+      <td><span class="idx-sp">SP500</span></td>
+      <td><span class="badge in">📈 IN</span></td>
+      <td class="num">75.29</td>
+      <td class="num entry-col">42.06</td>
+      <td class="num"><span style="color:#94a3b8">-79.0%</span></td>
+      <td class="num stop-col">40.53</td>
+      <td class="num">3.6%</td>
+      <td class="num tp1-col">45.11</td>
+      <td class="num tp2-col">48.52</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td><span style="color:#10b981">79.0%</span></td>
+      <td><span class="mini-badge badge-ok">SMA30↑</span></td>
+      <td><span class="mini-badge badge-ko">MS−</span> <span style="color:#ef4444">-7.6%</span></td>
+    </tr>
+    <tr style="border-left: 3px solid #8b5cf6;">
+      <td class="ticker-cell"><strong>KEY</strong> <span class="mini-badge badge-warn" title="Hubo un breakout fallido previo">⚠️ FBrk</span></td>
+      <td><span class="idx-sp">SP500</span></td>
+      <td><span class="badge in">📈 IN</span></td>
+      <td class="num">22.75</td>
+      <td class="num entry-col">13.33</td>
+      <td class="num"><span style="color:#94a3b8">-70.6%</span></td>
+      <td class="num stop-col">12.74</td>
+      <td class="num">4.5%</td>
+      <td class="num tp1-col">14.53</td>
+      <td class="num tp2-col">15.86</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td><span style="color:#10b981">70.6%</span></td>
+      <td><span class="mini-badge badge-ok">SMA30↑</span></td>
+      <td><span class="mini-badge badge-ok">MS+</span> <span style="color:#10b981">5.5%</span></td>
+    </tr>
+    <tr style="border-left: 3px solid #8b5cf6;">
+      <td class="ticker-cell"><strong>RF</strong> <span class="mini-badge badge-warn" title="Hubo un breakout fallido previo">⚠️ FBrk</span></td>
+      <td><span class="idx-sp">SP500</span></td>
+      <td><span class="badge in">📈 IN</span></td>
+      <td class="num">29.00</td>
+      <td class="num entry-col">17.77</td>
+      <td class="num"><span style="color:#94a3b8">-63.2%</span></td>
+      <td class="num stop-col">16.96</td>
+      <td class="num">4.6%</td>
+      <td class="num tp1-col">19.39</td>
+      <td class="num tp2-col">21.20</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td><span style="color:#10b981">63.2%</span></td>
+      <td><span class="mini-badge badge-ok">SMA30↑</span></td>
+      <td><span class="mini-badge badge-ko">MS−</span> <span style="color:#ef4444">-0.4%</span></td>
+    </tr>
+    <tr style="border-left: 3px solid #8b5cf6;">
+      <td class="ticker-cell"><strong>BKNG</strong> <span class="mini-badge badge-warn" title="Hubo un breakout fallido previo">⚠️ FBrk</span></td>
+      <td><span class="idx-sp">SP500</span></td>
+      <td><span class="badge in">📈 IN</span></td>
+      <td class="num">175.72</td>
+      <td class="num entry-col">109.16</td>
+      <td class="num"><span style="color:#94a3b8">-61.0%</span></td>
+      <td class="num stop-col">104.22</td>
+      <td class="num">4.5%</td>
+      <td class="num tp1-col">119.03</td>
+      <td class="num tp2-col">130.06</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td><span style="color:#10b981">61.0%</span></td>
+      <td><span class="mini-badge badge-ko">SMA30↓</span></td>
+      <td><span class="mini-badge badge-ko">MS−</span> <span style="color:#ef4444">-19.9%</span></td>
+    </tr>
+    <tr style="border-left: 3px solid #8b5cf6;">
+      <td class="ticker-cell"><strong>OKTA</strong> <span class="mini-badge badge-warn" title="Hubo un breakout fallido previo">⚠️ FBrk</span></td>
+      <td><span class="idx-nq">NASDAQ</span></td>
+      <td><span class="badge in">📈 IN</span></td>
+      <td class="num">116.27</td>
+      <td class="num entry-col">74.18</td>
+      <td class="num"><span style="color:#94a3b8">-56.7%</span></td>
+      <td class="num stop-col">69.68</td>
+      <td class="num">6.1%</td>
+      <td class="num tp1-col">83.18</td>
+      <td class="num tp2-col">93.24</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td><span style="color:#10b981">56.7%</span></td>
+      <td><span class="mini-badge badge-ok">SMA30↑</span></td>
+      <td><span class="mini-badge badge-ok">MS+</span> <span style="color:#10b981">17.4%</span></td>
+    </tr>
+    <tr style="border-left: 3px solid #8b5cf6;">
+      <td class="ticker-cell"><strong>ALB</strong> </td>
+      <td><span class="idx-sp">SP500</span></td>
+      <td><span class="badge in">📈 IN</span></td>
+      <td class="num">166.11</td>
+      <td class="num entry-col">106.10</td>
+      <td class="num"><span style="color:#94a3b8">-56.6%</span></td>
+      <td class="num stop-col">98.92</td>
+      <td class="num">6.8%</td>
+      <td class="num tp1-col">120.47</td>
+      <td class="num tp2-col">136.52</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td><span style="color:#10b981">56.6%</span></td>
+      <td><span class="mini-badge badge-ok">SMA30↑</span></td>
+      <td><span class="mini-badge badge-ok">MS+</span> <span style="color:#10b981">14.6%</span></td>
+    </tr>
+    <tr style="border-left: 3px solid #8b5cf6;">
+      <td class="ticker-cell"><strong>MTB</strong> </td>
+      <td><span class="idx-sp">SP500</span></td>
+      <td><span class="badge in">📈 IN</span></td>
+      <td class="num">228.35</td>
+      <td class="num entry-col">146.54</td>
+      <td class="num"><span style="color:#94a3b8">-55.8%</span></td>
+      <td class="num stop-col">140.96</td>
+      <td class="num">3.8%</td>
+      <td class="num tp1-col">157.69</td>
+      <td class="num tp2-col">170.17</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td><span style="color:#10b981">55.8%</span></td>
+      <td><span class="mini-badge badge-ok">SMA30↑</span></td>
+      <td><span class="mini-badge badge-ok">MS+</span> <span style="color:#10b981">2.0%</span></td>
+    </tr>
+    <tr style="border-left: 3px solid #8b5cf6;">
+      <td class="ticker-cell"><strong>LUMN</strong> </td>
+      <td><span class="idx-sp">SP500</span></td>
+      <td><span class="badge in">📈 IN</span></td>
+      <td class="num">8.43</td>
+      <td class="num entry-col">5.55</td>
+      <td class="num"><span style="color:#94a3b8">-51.9%</span></td>
+      <td class="num stop-col">5.18</td>
+      <td class="num">6.7%</td>
+      <td class="num tp1-col">6.30</td>
+      <td class="num tp2-col">7.14</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td><span style="color:#10b981">51.9%</span></td>
+      <td><span class="mini-badge badge-ok">SMA30↑</span></td>
+      <td><span class="mini-badge badge-ok">MS+</span> <span style="color:#10b981">5.6%</span></td>
+    </tr>
+    <tr style="border-left: 3px solid #8b5cf6;">
+      <td class="ticker-cell"><strong>ORCL</strong> </td>
+      <td><span class="idx-sp">SP500</span></td>
+      <td><span class="badge in">📈 IN</span></td>
+      <td class="num">188.33</td>
+      <td class="num entry-col">124.06</td>
+      <td class="num"><span style="color:#94a3b8">-51.8%</span></td>
+      <td class="num stop-col">119.51</td>
+      <td class="num">3.7%</td>
+      <td class="num tp1-col">133.14</td>
+      <td class="num tp2-col">143.30</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td><span style="color:#10b981">51.8%</span></td>
+      <td><span class="mini-badge badge-ko">SMA30↓</span></td>
+      <td><span class="mini-badge badge-ko">MS−</span> <span style="color:#ef4444">-19.2%</span></td>
+    </tr>
+    <tr style="border-left: 3px solid #8b5cf6;">
+      <td class="ticker-cell"><strong>LNC</strong> <span class="mini-badge badge-warn" title="Hubo un breakout fallido previo">⚠️ FBrk</span></td>
+      <td><span class="idx-sp">SP500</span></td>
+      <td><span class="badge in">📈 IN</span></td>
+      <td class="num">37.97</td>
+      <td class="num entry-col">25.07</td>
+      <td class="num"><span style="color:#94a3b8">-51.5%</span></td>
+      <td class="num stop-col">24.17</td>
+      <td class="num">3.6%</td>
+      <td class="num tp1-col">26.86</td>
+      <td class="num tp2-col">28.87</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td><span style="color:#10b981">51.5%</span></td>
+      <td><span class="mini-badge badge-ko">SMA30↓</span></td>
+      <td><span class="mini-badge badge-ko">MS−</span> <span style="color:#ef4444">-10.3%</span></td>
+    </tr>
+    <tr style="border-left: 3px solid #8b5cf6;">
+      <td class="ticker-cell"><strong>PCAR</strong> </td>
+      <td><span class="idx-sp">SP500</span></td>
+      <td><span class="badge in">📈 IN</span></td>
+      <td class="num">121.04</td>
+      <td class="num entry-col">80.63</td>
+      <td class="num"><span style="color:#94a3b8">-50.1%</span></td>
+      <td class="num stop-col">77.61</td>
+      <td class="num">3.8%</td>
+      <td class="num tp1-col">86.69</td>
+      <td class="num tp2-col">93.46</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td><span style="color:#10b981">50.1%</span></td>
+      <td><span class="mini-badge badge-ok">SMA30↑</span></td>
+      <td><span class="mini-badge badge-ok">MS+</span> <span style="color:#10b981">0.7%</span></td>
+    </tr>
+    <tr style="border-left: 3px solid #8b5cf6;">
+      <td class="ticker-cell"><strong>EXPD</strong> <span class="mini-badge badge-warn" title="Hubo un breakout fallido previo">⚠️ FBrk</span></td>
+      <td><span class="idx-sp">SP500</span></td>
+      <td><span class="badge in">📈 IN</span></td>
+      <td class="num">164.02</td>
+      <td class="num entry-col">112.26</td>
+      <td class="num"><span style="color:#94a3b8">-46.1%</span></td>
+      <td class="num stop-col">107.04</td>
+      <td class="num">4.6%</td>
+      <td class="num tp1-col">122.68</td>
+      <td class="num tp2-col">134.34</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td><span style="color:#10b981">46.1%</span></td>
+      <td><span class="mini-badge badge-ok">SMA30↑</span></td>
+      <td><span class="mini-badge badge-ok">MS+</span> <span style="color:#10b981">6.6%</span></td>
+    </tr>
+    <tr style="border-left: 3px solid #8b5cf6;">
+      <td class="ticker-cell"><strong>SCHW</strong> <span class="mini-badge badge-warn" title="Hubo un breakout fallido previo">⚠️ FBrk</span></td>
+      <td><span class="idx-sp">SP500</span></td>
+      <td><span class="badge in">📈 IN</span></td>
+      <td class="num">93.67</td>
+      <td class="num entry-col">69.03</td>
+      <td class="num"><span style="color:#94a3b8">-35.7%</span></td>
+      <td class="num stop-col">64.69</td>
+      <td class="num">6.3%</td>
+      <td class="num tp1-col">77.69</td>
+      <td class="num tp2-col">87.37</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td><span style="color:#10b981">35.7%</span></td>
+      <td><span class="mini-badge badge-ok">SMA30↑</span></td>
+      <td><span class="mini-badge badge-ko">MS−</span> <span style="color:#ef4444">-10.7%</span></td>
+    </tr>
+    <tr style="border-left: 3px solid #8b5cf6;">
+      <td class="ticker-cell"><strong>AMAT</strong> </td>
+      <td><span class="idx-sp">SP500</span></td>
+      <td><span class="badge in">📈 IN</span></td>
+      <td class="num">568.23</td>
+      <td class="num entry-col">419.98</td>
+      <td class="num"><span style="color:#94a3b8">-35.3%</span></td>
+      <td class="num stop-col">403.41</td>
+      <td class="num">3.9%</td>
+      <td class="num tp1-col">453.12</td>
+      <td class="num tp2-col">490.16</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td><span style="color:#10b981">35.3%</span></td>
+      <td><span class="mini-badge badge-ok">SMA30↑</span></td>
+      <td><span class="mini-badge badge-ok">MS+</span> <span style="color:#10b981">77.2%</span></td>
+    </tr>
+    <tr style="border-left: 3px solid #8b5cf6;">
+      <td class="ticker-cell"><strong>GRMN</strong> <span class="mini-badge badge-warn" title="Hubo un breakout fallido previo">⚠️ FBrk</span></td>
+      <td><span class="idx-sp">SP500</span></td>
+      <td><span class="badge in">📈 IN</span></td>
+      <td class="num">233.92</td>
+      <td class="num entry-col">174.11</td>
+      <td class="num"><span style="color:#94a3b8">-34.4%</span></td>
+      <td class="num stop-col">167.06</td>
+      <td class="num">4.0%</td>
+      <td class="num tp1-col">188.21</td>
+      <td class="num tp2-col">203.97</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td><span style="color:#10b981">34.4%</span></td>
+      <td><span class="mini-badge badge-ok">SMA30↑</span></td>
+      <td><span class="mini-badge badge-ko">MS−</span> <span style="color:#ef4444">-6.9%</span></td>
+    </tr>
+    <tr style="border-left: 3px solid #8b5cf6;">
+      <td class="ticker-cell"><strong>LRCX</strong> </td>
+      <td><span class="idx-sp">SP500</span></td>
+      <td><span class="badge in">📈 IN</span></td>
+      <td class="num">369.34</td>
+      <td class="num entry-col">275.84</td>
+      <td class="num"><span style="color:#94a3b8">-33.9%</span></td>
+      <td class="num stop-col">262.76</td>
+      <td class="num">4.7%</td>
+      <td class="num tp1-col">302.00</td>
+      <td class="num tp2-col">331.24</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td><span style="color:#10b981">33.9%</span></td>
+      <td><span class="mini-badge badge-ok">SMA30↑</span></td>
+      <td><span class="mini-badge badge-ok">MS+</span> <span style="color:#10b981">78.2%</span></td>
+    </tr>
+    <tr style="border-left: 3px solid #8b5cf6;">
+      <td class="ticker-cell"><strong>GM</strong> </td>
+      <td><span class="idx-sp">SP500</span></td>
+      <td><span class="badge in">📈 IN</span></td>
+      <td class="num">82.51</td>
+      <td class="num entry-col">61.74</td>
+      <td class="num"><span style="color:#94a3b8">-33.6%</span></td>
+      <td class="num stop-col">58.77</td>
+      <td class="num">4.8%</td>
+      <td class="num tp1-col">67.66</td>
+      <td class="num tp2-col">74.29</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td><span style="color:#10b981">33.6%</span></td>
+      <td><span class="mini-badge badge-ok">SMA30↑</span></td>
+      <td><span class="mini-badge badge-ok">MS+</span> <span style="color:#10b981">6.0%</span></td>
+    </tr>
+    <tr style="border-left: 3px solid #8b5cf6;">
+      <td class="ticker-cell"><strong>MPWR</strong> </td>
+      <td><span class="idx-nq">NASDAQ</span></td>
+      <td><span class="badge in">📈 IN</span></td>
+      <td class="num">1,498.77</td>
+      <td class="num entry-col">1,125.49</td>
+      <td class="num"><span style="color:#94a3b8">-33.2%</span></td>
+      <td class="num stop-col">1,075.27</td>
+      <td class="num">4.5%</td>
+      <td class="num tp1-col">1,225.93</td>
+      <td class="num tp2-col">1,338.20</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td><span style="color:#10b981">33.2%</span></td>
+      <td><span class="mini-badge badge-ok">SMA30↑</span></td>
+      <td><span class="mini-badge badge-ok">MS+</span> <span style="color:#10b981">27.2%</span></td>
+    </tr>
+    <tr style="border-left: 3px solid #8b5cf6;">
+      <td class="ticker-cell"><strong>DKNG</strong> <span class="mini-badge badge-warn" title="Hubo un breakout fallido previo">⚠️ FBrk</span></td>
+      <td><span class="idx-sp">SP500</span></td>
+      <td><span class="badge in">📈 IN</span></td>
+      <td class="num">28.51</td>
+      <td class="num entry-col">21.62</td>
+      <td class="num"><span style="color:#94a3b8">-31.9%</span></td>
+      <td class="num stop-col">19.86</td>
+      <td class="num">8.1%</td>
+      <td class="num tp1-col">25.13</td>
+      <td class="num tp2-col">29.06</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td><span style="color:#10b981">31.9%</span></td>
+      <td><span class="mini-badge badge-ko">SMA30↓</span></td>
+      <td><span class="mini-badge badge-ko">MS−</span> <span style="color:#ef4444">-22.2%</span></td>
+    </tr>
+    <tr style="border-left: 3px solid #8b5cf6;">
+      <td class="ticker-cell"><strong>WBD</strong> </td>
+      <td><span class="idx-sp">SP500</span></td>
+      <td><span class="badge in">📈 IN</span></td>
+      <td class="num">26.60</td>
+      <td class="num entry-col">20.24</td>
+      <td class="num"><span style="color:#94a3b8">-31.4%</span></td>
+      <td class="num stop-col">19.03</td>
+      <td class="num">6.0%</td>
+      <td class="num tp1-col">22.65</td>
+      <td class="num tp2-col">25.35</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td><span style="color:#10b981">31.4%</span></td>
+      <td><span class="mini-badge badge-ok">SMA30↑</span></td>
+      <td><span class="mini-badge badge-ok">MS+</span> <span style="color:#10b981">6.2%</span></td>
+    </tr>
+    <tr style="border-left: 3px solid #8b5cf6;">
+      <td class="ticker-cell"><strong>DECK</strong> <span class="mini-badge badge-warn" title="Hubo un breakout fallido previo">⚠️ FBrk</span></td>
+      <td><span class="idx-sp">SP500</span></td>
+      <td><span class="badge in">📈 IN</span></td>
+      <td class="num">110.17</td>
+      <td class="num entry-col">83.91</td>
+      <td class="num"><span style="color:#94a3b8">-31.3%</span></td>
+      <td class="num stop-col">78.88</td>
+      <td class="num">6.0%</td>
+      <td class="num tp1-col">93.99</td>
+      <td class="num tp2-col">105.25</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td><span style="color:#10b981">31.3%</span></td>
+      <td><span class="mini-badge badge-ok">SMA30↑</span></td>
+      <td><span class="mini-badge badge-ko">MS−</span> <span style="color:#ef4444">-4.9%</span></td>
+    </tr>
+    <tr style="border-left: 3px solid #8b5cf6;">
+      <td class="ticker-cell"><strong>DAL</strong> <span class="mini-badge badge-warn" title="Hubo un breakout fallido previo">⚠️ FBrk</span></td>
+      <td><span class="idx-sp">SP500</span></td>
+      <td><span class="badge in">📈 IN</span></td>
+      <td class="num">83.14</td>
+      <td class="num entry-col">63.37</td>
+      <td class="num"><span style="color:#94a3b8">-31.2%</span></td>
+      <td class="num stop-col">60.07</td>
+      <td class="num">5.2%</td>
+      <td class="num tp1-col">69.97</td>
+      <td class="num tp2-col">77.35</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td><span style="color:#10b981">31.2%</span></td>
+      <td><span class="mini-badge badge-ok">SMA30↑</span></td>
+      <td><span class="mini-badge badge-ok">MS+</span> <span style="color:#10b981">16.4%</span></td>
+    </tr>
+    <tr style="border-left: 3px solid #8b5cf6;">
+      <td class="ticker-cell"><strong>CCL</strong> <span class="mini-badge badge-warn" title="Hubo un breakout fallido previo">⚠️ FBrk</span></td>
+      <td><span class="idx-sp">SP500</span></td>
+      <td><span class="badge in">📈 IN</span></td>
+      <td class="num">30.90</td>
+      <td class="num entry-col">24.14</td>
+      <td class="num"><span style="color:#94a3b8">-28.0%</span></td>
+      <td class="num stop-col">23.27</td>
+      <td class="num">3.6%</td>
+      <td class="num tp1-col">25.87</td>
+      <td class="num tp2-col">27.81</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td><span style="color:#10b981">28.0%</span></td>
+      <td><span class="mini-badge badge-ok">SMA30↑</span></td>
+      <td><span class="mini-badge badge-ko">MS−</span> <span style="color:#ef4444">-2.5%</span></td>
+    </tr>
+    <tr style="border-left: 3px solid #8b5cf6;">
+      <td class="ticker-cell"><strong>PKG</strong> <span class="mini-badge badge-warn" title="Hubo un breakout fallido previo">⚠️ FBrk</span></td>
+      <td><span class="idx-sp">SP500</span></td>
+      <td><span class="badge in">📈 IN</span></td>
+      <td class="num">228.04</td>
+      <td class="num entry-col">180.92</td>
+      <td class="num"><span style="color:#94a3b8">-26.0%</span></td>
+      <td class="num stop-col">172.87</td>
+      <td class="num">4.4%</td>
+      <td class="num tp1-col">197.01</td>
+      <td class="num tp2-col">215.00</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td><span style="color:#10b981">26.0%</span></td>
+      <td><span class="mini-badge badge-ok">SMA30↑</span></td>
+      <td><span class="mini-badge badge-ko">MS−</span> <span style="color:#ef4444">-2.0%</span></td>
+    </tr>
+    <tr style="border-left: 3px solid #8b5cf6;">
+      <td class="ticker-cell"><strong>PCG</strong> <span class="mini-badge badge-warn" title="Hubo un breakout fallido previo">⚠️ FBrk</span></td>
+      <td><span class="idx-sp">SP500</span></td>
+      <td><span class="badge in">📈 IN</span></td>
+      <td class="num">16.74</td>
+      <td class="num entry-col">13.35</td>
+      <td class="num"><span style="color:#94a3b8">-25.4%</span></td>
+      <td class="num stop-col">12.82</td>
+      <td class="num">4.0%</td>
+      <td class="num tp1-col">14.41</td>
+      <td class="num tp2-col">15.60</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td><span style="color:#10b981">25.4%</span></td>
+      <td><span class="mini-badge badge-ok">SMA30↑</span></td>
+      <td><span class="mini-badge badge-ko">MS−</span> <span style="color:#ef4444">-5.8%</span></td>
+    </tr>
+    <tr style="border-left: 3px solid #8b5cf6;">
+      <td class="ticker-cell"><strong>UAL</strong> <span class="mini-badge badge-warn" title="Hubo un breakout fallido previo">⚠️ FBrk</span></td>
+      <td><span class="idx-sp">SP500</span></td>
+      <td><span class="badge in">📈 IN</span></td>
+      <td class="num">118.51</td>
+      <td class="num entry-col">94.57</td>
+      <td class="num"><span style="color:#94a3b8">-25.3%</span></td>
+      <td class="num stop-col">89.93</td>
+      <td class="num">4.9%</td>
+      <td class="num tp1-col">103.85</td>
+      <td class="num tp2-col">114.23</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td><span style="color:#10b981">25.3%</span></td>
+      <td><span class="mini-badge badge-ok">SMA30↑</span></td>
+      <td><span class="mini-badge badge-ok">MS+</span> <span style="color:#10b981">6.1%</span></td>
+    </tr>
+    <tr style="border-left: 3px solid #8b5cf6;">
+      <td class="ticker-cell"><strong>PWR</strong> </td>
+      <td><span class="idx-sp">SP500</span></td>
+      <td><span class="badge in">📈 IN</span></td>
+      <td class="num">719.29</td>
+      <td class="num entry-col">583.62</td>
+      <td class="num"><span style="color:#94a3b8">-23.2%</span></td>
+      <td class="num stop-col">560.05</td>
+      <td class="num">4.0%</td>
+      <td class="num tp1-col">630.74</td>
+      <td class="num tp2-col">683.43</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td><span style="color:#10b981">23.2%</span></td>
+      <td><span class="mini-badge badge-ok">SMA30↑</span></td>
+      <td><span class="mini-badge badge-ok">MS+</span> <span style="color:#10b981">30.6%</span></td>
+    </tr>
+    <tr style="border-left: 3px solid #8b5cf6;">
+      <td class="ticker-cell"><strong>NWSA</strong> <span class="mini-badge badge-warn" title="Hubo un breakout fallido previo">⚠️ FBrk</span></td>
+      <td><span class="idx-sp">SP500</span></td>
+      <td><span class="badge in">📈 IN</span></td>
+      <td class="num">25.93</td>
+      <td class="num entry-col">21.14</td>
+      <td class="num"><span style="color:#94a3b8">-22.6%</span></td>
+      <td class="num stop-col">20.28</td>
+      <td class="num">4.1%</td>
+      <td class="num tp1-col">22.87</td>
+      <td class="num tp2-col">24.79</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td><span style="color:#10b981">22.6%</span></td>
+      <td><span class="mini-badge badge-ok">SMA30↑</span></td>
+      <td><span class="mini-badge badge-ko">MS−</span> <span style="color:#ef4444">-12.9%</span></td>
+    </tr>
+    <tr style="border-left: 3px solid #8b5cf6;">
+      <td class="ticker-cell"><strong>STX</strong> </td>
+      <td><span class="idx-sp">SP500</span></td>
+      <td><span class="badge in">📈 IN</span></td>
+      <td class="num">1,031.34</td>
+      <td class="num entry-col">841.31</td>
+      <td class="num"><span style="color:#94a3b8">-22.6%</span></td>
+      <td class="num stop-col">785.47</td>
+      <td class="num">6.6%</td>
+      <td class="num tp1-col">952.98</td>
+      <td class="num tp2-col">1,077.81</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td><span style="color:#10b981">22.6%</span></td>
+      <td><span class="mini-badge badge-ok">SMA30↑</span></td>
+      <td><span class="mini-badge badge-ok">MS+</span> <span style="color:#10b981">154.9%</span></td>
+    </tr>
+    <tr style="border-left: 3px solid #8b5cf6;">
+      <td class="ticker-cell"><strong>KLAC</strong> </td>
+      <td><span class="idx-sp">SP500</span></td>
+      <td><span class="badge in">📈 IN</span></td>
+      <td class="num">237.33</td>
+      <td class="num entry-col">193.69</td>
+      <td class="num"><span style="color:#94a3b8">-22.5%</span></td>
+      <td class="num stop-col">182.50</td>
+      <td class="num">5.8%</td>
+      <td class="num tp1-col">216.07</td>
+      <td class="num tp2-col">241.09</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td><span style="color:#10b981">22.5%</span></td>
+      <td><span class="mini-badge badge-ok">SMA30↑</span></td>
+      <td><span class="mini-badge badge-ok">MS+</span> <span style="color:#10b981">60.8%</span></td>
+    </tr>
+    <tr style="border-left: 3px solid #8b5cf6;">
+      <td class="ticker-cell"><strong>DUOL</strong> <span class="mini-badge badge-warn" title="Hubo un breakout fallido previo">⚠️ FBrk</span></td>
+      <td><span class="idx-nq">NASDAQ</span></td>
+      <td><span class="badge in">📈 IN</span></td>
+      <td class="num">128.07</td>
+      <td class="num entry-col">105.46</td>
+      <td class="num"><span style="color:#94a3b8">-21.4%</span></td>
+      <td class="num stop-col">98.16</td>
+      <td class="num">6.9%</td>
+      <td class="num tp1-col">120.06</td>
+      <td class="num tp2-col">136.37</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td><span style="color:#10b981">21.4%</span></td>
+      <td><span class="mini-badge badge-ko">SMA30↓</span></td>
+      <td><span class="mini-badge badge-ko">MS−</span> <span style="color:#ef4444">-45.6%</span></td>
+    </tr>
+    <tr style="border-left: 3px solid #8b5cf6;">
+      <td class="ticker-cell"><strong>APP</strong> <span class="mini-badge badge-warn" title="Hubo un breakout fallido previo">⚠️ FBrk</span></td>
+      <td><span class="idx-sp">SP500</span></td>
+      <td><span class="badge in">📈 IN</span></td>
+      <td class="num">515.20</td>
+      <td class="num entry-col">428.99</td>
+      <td class="num"><span style="color:#94a3b8">-20.1%</span></td>
+      <td class="num stop-col">387.36</td>
+      <td class="num">9.7%</td>
+      <td class="num tp1-col">512.26</td>
+      <td class="num tp2-col">605.34</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td><span style="color:#10b981">20.1%</span></td>
+      <td><span class="mini-badge badge-ko">SMA30↓</span></td>
+      <td><span class="mini-badge badge-ko">MS−</span> <span style="color:#ef4444">-9.3%</span></td>
+    </tr>
+    <tr style="border-left: 3px solid #8b5cf6;">
+      <td class="ticker-cell"><strong>HST</strong> </td>
+      <td><span class="idx-sp">SP500</span></td>
+      <td><span class="badge in">📈 IN</span></td>
+      <td class="num">24.90</td>
+      <td class="num entry-col">20.78</td>
+      <td class="num"><span style="color:#94a3b8">-19.8%</span></td>
+      <td class="num stop-col">19.80</td>
+      <td class="num">4.7%</td>
+      <td class="num tp1-col">22.74</td>
+      <td class="num tp2-col">24.94</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td><span style="color:#10b981">19.8%</span></td>
+      <td><span class="mini-badge badge-ok">SMA30↑</span></td>
+      <td><span class="mini-badge badge-ok">MS+</span> <span style="color:#10b981">23.1%</span></td>
+    </tr>
+    <tr style="border-left: 3px solid #8b5cf6;">
+      <td class="ticker-cell"><strong>TSLA</strong> <span class="mini-badge badge-warn" title="Hubo un breakout fallido previo">⚠️ FBrk</span></td>
+      <td><span class="idx-sp">SP500</span></td>
+      <td><span class="badge in">📈 IN</span></td>
+      <td class="num">404.66</td>
+      <td class="num entry-col">338.00</td>
+      <td class="num"><span style="color:#94a3b8">-19.7%</span></td>
+      <td class="num stop-col">322.65</td>
+      <td class="num">4.5%</td>
+      <td class="num tp1-col">368.70</td>
+      <td class="num tp2-col">403.01</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td><span style="color:#10b981">19.7%</span></td>
+      <td><span class="mini-badge badge-ok">SMA30↑</span></td>
+      <td><span class="mini-badge badge-ko">MS−</span> <span style="color:#ef4444">-8.5%</span></td>
+    </tr>
+    <tr style="border-left: 3px solid #8b5cf6;">
+      <td class="ticker-cell"><strong>RL</strong> <span class="mini-badge badge-warn" title="Hubo un breakout fallido previo">⚠️ FBrk</span></td>
+      <td><span class="idx-sp">SP500</span></td>
+      <td><span class="badge in">📈 IN</span></td>
+      <td class="num">406.75</td>
+      <td class="num entry-col">340.10</td>
+      <td class="num"><span style="color:#94a3b8">-19.6%</span></td>
+      <td class="num stop-col">326.67</td>
+      <td class="num">3.9%</td>
+      <td class="num tp1-col">366.97</td>
+      <td class="num tp2-col">397.00</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td><span style="color:#10b981">19.6%</span></td>
+      <td><span class="mini-badge badge-ok">SMA30↑</span></td>
+      <td><span class="mini-badge badge-ok">MS+</span> <span style="color:#10b981">8.5%</span></td>
+    </tr>
+    <tr style="border-left: 3px solid #8b5cf6;">
+      <td class="ticker-cell"><strong>AVGO</strong> <span class="mini-badge badge-warn" title="Hubo un breakout fallido previo">⚠️ FBrk</span></td>
+      <td><span class="idx-sp">SP500</span></td>
+      <td><span class="badge in">📈 IN</span></td>
+      <td class="num">376.71</td>
+      <td class="num entry-col">315.54</td>
+      <td class="num"><span style="color:#94a3b8">-19.4%</span></td>
+      <td class="num stop-col">302.06</td>
+      <td class="num">4.3%</td>
+      <td class="num tp1-col">342.49</td>
+      <td class="num tp2-col">372.62</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td><span style="color:#10b981">19.4%</span></td>
+      <td><span class="mini-badge badge-ok">SMA30↑</span></td>
+      <td><span class="mini-badge badge-ko">MS−</span> <span style="color:#ef4444">-1.2%</span></td>
+    </tr>
+    <tr style="border-left: 3px solid #8b5cf6;">
+      <td class="ticker-cell"><strong>ILMN</strong> </td>
+      <td><span class="idx-sp">SP500</span></td>
+      <td><span class="badge in">📈 IN</span></td>
+      <td class="num">164.28</td>
+      <td class="num entry-col">137.79</td>
+      <td class="num"><span style="color:#94a3b8">-19.2%</span></td>
+      <td class="num stop-col">130.67</td>
+      <td class="num">5.2%</td>
+      <td class="num tp1-col">152.04</td>
+      <td class="num tp2-col">167.97</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td><span style="color:#10b981">19.2%</span></td>
+      <td><span class="mini-badge badge-ok">SMA30↑</span></td>
+      <td><span class="mini-badge badge-ok">MS+</span> <span style="color:#10b981">21.8%</span></td>
+    </tr>
+    <tr style="border-left: 3px solid #8b5cf6;">
+      <td class="ticker-cell"><strong>ASML</strong> <span class="mini-badge badge-warn" title="Hubo un breakout fallido previo">⚠️ FBrk</span></td>
+      <td><span class="idx-nq">NASDAQ</span></td>
+      <td><span class="badge in">📈 IN</span></td>
+      <td class="num">1,803.89</td>
+      <td class="num entry-col">1,528.64</td>
+      <td class="num"><span style="color:#94a3b8">-18.0%</span></td>
+      <td class="num stop-col">1,464.92</td>
+      <td class="num">4.2%</td>
+      <td class="num tp1-col">1,656.08</td>
+      <td class="num tp2-col">1,798.53</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td><span style="color:#10b981">18.0%</span></td>
+      <td><span class="mini-badge badge-ok">SMA30↑</span></td>
+      <td><span class="mini-badge badge-ok">MS+</span> <span style="color:#10b981">40.5%</span></td>
+    </tr>
+    <tr style="border-left: 3px solid #8b5cf6;">
+      <td class="ticker-cell"><strong>BAC</strong> <span class="mini-badge badge-warn" title="Hubo un breakout fallido previo">⚠️ FBrk</span></td>
+      <td><span class="idx-sp">SP500</span></td>
+      <td><span class="badge in">📈 IN</span></td>
+      <td class="num">56.84</td>
+      <td class="num entry-col">48.26</td>
+      <td class="num"><span style="color:#94a3b8">-17.8%</span></td>
+      <td class="num stop-col">46.55</td>
+      <td class="num">3.5%</td>
+      <td class="num tp1-col">51.67</td>
+      <td class="num tp2-col">55.48</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td><span style="color:#10b981">17.8%</span></td>
+      <td><span class="mini-badge badge-ok">SMA30↑</span></td>
+      <td><span class="mini-badge badge-ok">MS+</span> <span style="color:#10b981">0.6%</span></td>
+    </tr>
+    <tr style="border-left: 3px solid #8b5cf6;">
+      <td class="ticker-cell"><strong>IBM</strong> <span class="mini-badge badge-warn" title="Hubo un breakout fallido previo">⚠️ FBrk</span></td>
+      <td><span class="idx-sp">SP500</span></td>
+      <td><span class="badge in">📈 IN</span></td>
+      <td class="num">270.81</td>
+      <td class="num entry-col">230.30</td>
+      <td class="num"><span style="color:#94a3b8">-17.6%</span></td>
+      <td class="num stop-col">221.21</td>
+      <td class="num">3.9%</td>
+      <td class="num tp1-col">248.49</td>
+      <td class="num tp2-col">268.82</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td><span style="color:#10b981">17.6%</span></td>
+      <td><span class="mini-badge badge-ko">SMA30↓</span></td>
+      <td><span class="mini-badge badge-ko">MS−</span> <span style="color:#ef4444">-9.6%</span></td>
+    </tr>
+    <tr style="border-left: 3px solid #8b5cf6;">
+      <td class="ticker-cell"><strong>MGM</strong> </td>
+      <td><span class="idx-sp">SP500</span></td>
+      <td><span class="badge in">📈 IN</span></td>
+      <td class="num">47.98</td>
+      <td class="num entry-col">40.94</td>
+      <td class="num"><span style="color:#94a3b8">-17.2%</span></td>
+      <td class="num stop-col">38.79</td>
+      <td class="num">5.2%</td>
+      <td class="num tp1-col">45.23</td>
+      <td class="num tp2-col">50.03</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td><span style="color:#10b981">17.2%</span></td>
+      <td><span class="mini-badge badge-ok">SMA30↑</span></td>
+      <td><span class="mini-badge badge-ok">MS+</span> <span style="color:#10b981">17.4%</span></td>
+    </tr>
+    <tr style="border-left: 3px solid #8b5cf6;">
+      <td class="ticker-cell"><strong>F</strong> <span class="mini-badge badge-warn" title="Hubo un breakout fallido previo">⚠️ FBrk</span></td>
+      <td><span class="idx-sp">SP500</span></td>
+      <td><span class="badge in">📈 IN</span></td>
+      <td class="num">14.41</td>
+      <td class="num entry-col">12.36</td>
+      <td class="num"><span style="color:#94a3b8">-16.6%</span></td>
+      <td class="num stop-col">11.82</td>
+      <td class="num">4.4%</td>
+      <td class="num tp1-col">13.44</td>
+      <td class="num tp2-col">14.64</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td><span style="color:#10b981">16.6%</span></td>
+      <td><span class="mini-badge badge-ok">SMA30↑</span></td>
+      <td><span class="mini-badge badge-ok">MS+</span> <span style="color:#10b981">4.0%</span></td>
+    </tr>
+    <tr style="border-left: 3px solid #8b5cf6;">
+      <td class="ticker-cell"><strong>UPS</strong> <span class="mini-badge badge-warn" title="Hubo un breakout fallido previo">⚠️ FBrk</span></td>
+      <td><span class="idx-sp">SP500</span></td>
+      <td><span class="badge in">📈 IN</span></td>
+      <td class="num">110.02</td>
+      <td class="num entry-col">95.88</td>
+      <td class="num"><span style="color:#94a3b8">-14.8%</span></td>
+      <td class="num stop-col">92.33</td>
+      <td class="num">3.7%</td>
+      <td class="num tp1-col">102.96</td>
+      <td class="num tp2-col">110.88</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td><span style="color:#10b981">14.8%</span></td>
+      <td><span class="mini-badge badge-ok">SMA30↑</span></td>
+      <td><span class="mini-badge badge-ok">MS+</span> <span style="color:#10b981">3.5%</span></td>
+    </tr>
+    <tr style="border-left: 3px solid #8b5cf6;">
+      <td class="ticker-cell"><strong>BHP</strong> </td>
+      <td><span class="idx-nq">NASDAQ</span></td>
+      <td><span class="badge in">📈 IN</span></td>
+      <td class="num">92.51</td>
+      <td class="num entry-col">81.61</td>
+      <td class="num"><span style="color:#94a3b8">-13.4%</span></td>
+      <td class="num stop-col">75.09</td>
+      <td class="num">8.0%</td>
+      <td class="num tp1-col">94.66</td>
+      <td class="num tp2-col">109.25</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td><span style="color:#10b981">13.4%</span></td>
+      <td><span class="mini-badge badge-ok">SMA30↑</span></td>
+      <td><span class="mini-badge badge-ok">MS+</span> <span style="color:#10b981">30.5%</span></td>
+    </tr>
+    <tr style="border-left: 3px solid #8b5cf6;">
+      <td class="ticker-cell"><strong>CPT</strong> <span class="mini-badge badge-warn" title="Hubo un breakout fallido previo">⚠️ FBrk</span></td>
+      <td><span class="idx-sp">SP500</span></td>
+      <td><span class="badge in">📈 IN</span></td>
+      <td class="num">112.36</td>
+      <td class="num entry-col">100.74</td>
+      <td class="num"><span style="color:#94a3b8">-11.5%</span></td>
+      <td class="num stop-col">97.10</td>
+      <td class="num">3.6%</td>
+      <td class="num tp1-col">108.01</td>
+      <td class="num tp2-col">116.14</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td><span style="color:#10b981">11.5%</span></td>
+      <td><span class="mini-badge badge-ok">SMA30↑</span></td>
+      <td><span class="mini-badge badge-ko">MS−</span> <span style="color:#ef4444">-4.0%</span></td>
+    </tr>
+    <tr style="border-left: 3px solid #8b5cf6;">
+      <td class="ticker-cell"><strong>COST</strong> <span class="mini-badge badge-warn" title="Hubo un breakout fallido previo">⚠️ FBrk</span></td>
+      <td><span class="idx-sp">SP500</span></td>
+      <td><span class="badge in">📈 IN</span></td>
+      <td class="num">986.68</td>
+      <td class="num entry-col">887.06</td>
+      <td class="num"><span style="color:#94a3b8">-11.2%</span></td>
+      <td class="num stop-col">848.31</td>
+      <td class="num">4.4%</td>
+      <td class="num tp1-col">964.57</td>
+      <td class="num tp2-col">1,051.20</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td><span style="color:#10b981">11.2%</span></td>
+      <td><span class="mini-badge badge-ok">SMA30↑</span></td>
+      <td><span class="mini-badge badge-ko">MS−</span> <span style="color:#ef4444">-7.5%</span></td>
+    </tr>
+    <tr style="border-left: 3px solid #8b5cf6;">
+      <td class="ticker-cell"><strong>NEM</strong> <span class="mini-badge badge-warn" title="Hubo un breakout fallido previo">⚠️ FBrk</span></td>
+      <td><span class="idx-sp">SP500</span></td>
+      <td><span class="badge in">📈 IN</span></td>
+      <td class="num">108.44</td>
+      <td class="num entry-col">97.87</td>
+      <td class="num"><span style="color:#94a3b8">-10.8%</span></td>
+      <td class="num stop-col">89.32</td>
+      <td class="num">8.7%</td>
+      <td class="num tp1-col">114.96</td>
+      <td class="num tp2-col">134.06</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td><span style="color:#10b981">10.8%</span></td>
+      <td><span class="mini-badge badge-ok">SMA30↑</span></td>
+      <td><span class="mini-badge badge-ok">MS+</span> <span style="color:#10b981">3.6%</span></td>
+    </tr>
+    <tr style="border-left: 3px solid #8b5cf6;">
+      <td class="ticker-cell"><strong>KEYS</strong> </td>
+      <td><span class="idx-sp">SP500</span></td>
+      <td><span class="badge in">📈 IN</span></td>
+      <td class="num">350.29</td>
+      <td class="num entry-col">317.00</td>
+      <td class="num"><span style="color:#94a3b8">-10.5%</span></td>
+      <td class="num stop-col">297.70</td>
+      <td class="num">6.1%</td>
+      <td class="num tp1-col">355.60</td>
+      <td class="num tp2-col">398.76</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td><span style="color:#10b981">10.5%</span></td>
+      <td><span class="mini-badge badge-ok">SMA30↑</span></td>
+      <td><span class="mini-badge badge-ok">MS+</span> <span style="color:#10b981">37.9%</span></td>
+    </tr>
+    <tr style="border-left: 3px solid #8b5cf6;">
+      <td class="ticker-cell"><strong>GNRC</strong> </td>
+      <td><span class="idx-sp">SP500</span></td>
+      <td><span class="badge in">📈 IN</span></td>
+      <td class="num">265.66</td>
+      <td class="num entry-col">241.09</td>
+      <td class="num"><span style="color:#94a3b8">-10.2%</span></td>
+      <td class="num stop-col">219.22</td>
+      <td class="num">9.1%</td>
+      <td class="num tp1-col">284.84</td>
+      <td class="num tp2-col">333.74</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td><span style="color:#10b981">10.2%</span></td>
+      <td><span class="mini-badge badge-ok">SMA30↑</span></td>
+      <td><span class="mini-badge badge-ok">MS+</span> <span style="color:#10b981">25.3%</span></td>
+    </tr>
+    <tr style="border-left: 3px solid #8b5cf6;">
+      <td class="ticker-cell"><strong>JBHT</strong> </td>
+      <td><span class="idx-sp">SP500</span></td>
+      <td><span class="badge in">📈 IN</span></td>
+      <td class="num">279.82</td>
+      <td class="num entry-col">255.70</td>
+      <td class="num"><span style="color:#94a3b8">-9.4%</span></td>
+      <td class="num stop-col">246.45</td>
+      <td class="num">3.6%</td>
+      <td class="num tp1-col">274.21</td>
+      <td class="num tp2-col">294.90</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td><span style="color:#10b981">9.4%</span></td>
+      <td><span class="mini-badge badge-ok">SMA30↑</span></td>
+      <td><span class="mini-badge badge-ok">MS+</span> <span style="color:#10b981">31.4%</span></td>
+    </tr>
+    <tr style="border-left: 3px solid #8b5cf6;">
+      <td class="ticker-cell"><strong>WYNN</strong> <span class="mini-badge badge-warn" title="Hubo un breakout fallido previo">⚠️ FBrk</span></td>
+      <td><span class="idx-sp">SP500</span></td>
+      <td><span class="badge in">📈 IN</span></td>
+      <td class="num">103.67</td>
+      <td class="num entry-col">97.56</td>
+      <td class="num"><span style="color:#94a3b8">-6.3%</span></td>
+      <td class="num stop-col">91.57</td>
+      <td class="num">6.1%</td>
+      <td class="num tp1-col">109.54</td>
+      <td class="num tp2-col">122.94</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td><span style="color:#10b981">6.3%</span></td>
+      <td><span class="mini-badge badge-ko">SMA30↓</span></td>
+      <td><span class="mini-badge badge-ko">MS−</span> <span style="color:#ef4444">-17.2%</span></td>
+    </tr>
+    <tr style="border-left: 3px solid #8b5cf6;">
+      <td class="ticker-cell"><strong>CDNS</strong> </td>
+      <td><span class="idx-sp">SP500</span></td>
+      <td><span class="badge in">📈 IN</span></td>
+      <td class="num">387.85</td>
+      <td class="num entry-col">365.01</td>
+      <td class="num"><span style="color:#94a3b8">-6.3%</span></td>
+      <td class="num stop-col">352.23</td>
+      <td class="num">3.5%</td>
+      <td class="num tp1-col">390.57</td>
+      <td class="num tp2-col">419.13</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td><span style="color:#10b981">6.3%</span></td>
+      <td><span class="mini-badge badge-ok">SMA30↑</span></td>
+      <td><span class="mini-badge badge-ok">MS+</span> <span style="color:#10b981">6.3%</span></td>
+    </tr>
+    <tr style="border-left: 3px solid #8b5cf6;">
+      <td class="ticker-cell"><strong>C</strong> </td>
+      <td><span class="idx-sp">SP500</span></td>
+      <td><span class="badge in">📈 IN</span></td>
+      <td class="num">142.99</td>
+      <td class="num entry-col">134.65</td>
+      <td class="num"><span style="color:#94a3b8">-6.2%</span></td>
+      <td class="num stop-col">128.96</td>
+      <td class="num">4.2%</td>
+      <td class="num tp1-col">146.03</td>
+      <td class="num tp2-col">158.75</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td><span style="color:#10b981">6.2%</span></td>
+      <td><span class="mini-badge badge-ok">SMA30↑</span></td>
+      <td><span class="mini-badge badge-ok">MS+</span> <span style="color:#10b981">19.1%</span></td>
+    </tr>
+    <tr style="border-left: 3px solid #8b5cf6;">
+      <td class="ticker-cell"><strong>VFC</strong> <span class="mini-badge badge-warn" title="Hubo un breakout fallido previo">⚠️ FBrk</span></td>
+      <td><span class="idx-sp">SP500</span></td>
+      <td><span class="badge in">📈 IN</span></td>
+      <td class="num">17.70</td>
+      <td class="num entry-col">16.68</td>
+      <td class="num"><span style="color:#94a3b8">-6.1%</span></td>
+      <td class="num stop-col">15.42</td>
+      <td class="num">7.6%</td>
+      <td class="num tp1-col">19.21</td>
+      <td class="num tp2-col">22.03</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td><span style="color:#10b981">6.1%</span></td>
+      <td><span class="mini-badge badge-ok">SMA30↑</span></td>
+      <td><span class="mini-badge badge-ko">MS−</span> <span style="color:#ef4444">-2.1%</span></td>
+    </tr>
+    <tr style="border-left: 3px solid #8b5cf6;">
+      <td class="ticker-cell"><strong>ADM</strong> </td>
+      <td><span class="idx-sp">SP500</span></td>
+      <td><span class="badge in">📈 IN</span></td>
+      <td class="num">78.02</td>
+      <td class="num entry-col">73.70</td>
+      <td class="num"><span style="color:#94a3b8">-5.9%</span></td>
+      <td class="num stop-col">70.62</td>
+      <td class="num">4.2%</td>
+      <td class="num tp1-col">79.87</td>
+      <td class="num tp2-col">86.77</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td><span style="color:#10b981">5.9%</span></td>
+      <td><span class="mini-badge badge-ok">SMA30↑</span></td>
+      <td><span class="mini-badge badge-ok">MS+</span> <span style="color:#10b981">10.0%</span></td>
+    </tr>
+    <tr style="border-left: 3px solid #8b5cf6;">
+      <td class="ticker-cell"><strong>AEP</strong> </td>
+      <td><span class="idx-sp">SP500</span></td>
+      <td><span class="badge in">📈 IN</span></td>
+      <td class="num">129.75</td>
+      <td class="num entry-col">122.93</td>
+      <td class="num"><span style="color:#94a3b8">-5.5%</span></td>
+      <td class="num stop-col">118.32</td>
+      <td class="num">3.8%</td>
+      <td class="num tp1-col">132.15</td>
+      <td class="num tp2-col">142.47</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td><span style="color:#10b981">5.5%</span></td>
+      <td><span class="mini-badge badge-ok">SMA30↑</span></td>
+      <td><span class="mini-badge badge-ko">MS−</span> <span style="color:#ef4444">-1.6%</span></td>
+    </tr>
+    <tr style="border-left: 3px solid #8b5cf6;">
+      <td class="ticker-cell"><strong>CINF</strong> <span class="mini-badge badge-warn" title="Hubo un breakout fallido previo">⚠️ FBrk</span></td>
+      <td><span class="idx-sp">SP500</span></td>
+      <td><span class="badge in">📈 IN</span></td>
+      <td class="num">171.79</td>
+      <td class="num entry-col">165.06</td>
+      <td class="num"><span style="color:#94a3b8">-4.1%</span></td>
+      <td class="num stop-col">158.67</td>
+      <td class="num">3.9%</td>
+      <td class="num tp1-col">177.83</td>
+      <td class="num tp2-col">192.10</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td><span style="color:#10b981">4.1%</span></td>
+      <td><span class="mini-badge badge-ok">SMA30↑</span></td>
+      <td><span class="mini-badge badge-ko">MS−</span> <span style="color:#ef4444">-2.6%</span></td>
+    </tr>
+    <tr style="border-left: 3px solid #8b5cf6;">
+      <td class="ticker-cell"><strong>CARR</strong> </td>
+      <td><span class="idx-sp">SP500</span></td>
+      <td><span class="badge in">📈 IN</span></td>
+      <td class="num">71.15</td>
+      <td class="num entry-col">68.79</td>
+      <td class="num"><span style="color:#f59e0b">-3.4%</span></td>
+      <td class="num stop-col">65.86</td>
+      <td class="num">4.3%</td>
+      <td class="num tp1-col">74.66</td>
+      <td class="num tp2-col">81.21</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td><span style="color:#10b981">3.4%</span></td>
+      <td><span class="mini-badge badge-ok">SMA30↑</span></td>
+      <td><span class="mini-badge badge-ok">MS+</span> <span style="color:#10b981">3.5%</span></td>
+    </tr>
+    <tr style="border-left: 3px solid #8b5cf6;">
+      <td class="ticker-cell"><strong>LYV</strong> <span class="mini-badge badge-warn" title="Hubo un breakout fallido previo">⚠️ FBrk</span></td>
+      <td><span class="idx-sp">SP500</span></td>
+      <td><span class="badge in">📈 IN</span></td>
+      <td class="num">174.10</td>
+      <td class="num entry-col">168.55</td>
+      <td class="num"><span style="color:#f59e0b">-3.3%</span></td>
+      <td class="num stop-col">161.87</td>
+      <td class="num">4.0%</td>
+      <td class="num tp1-col">181.91</td>
+      <td class="num tp2-col">196.85</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td><span style="color:#10b981">3.3%</span></td>
+      <td><span class="mini-badge badge-ok">SMA30↑</span></td>
+      <td><span class="mini-badge badge-ok">MS+</span> <span style="color:#10b981">1.6%</span></td>
+    </tr>
+    <tr style="border-left: 3px solid #8b5cf6;">
+      <td class="ticker-cell"><strong>FDX</strong> </td>
+      <td><span class="idx-sp">SP500</span></td>
+      <td><span class="badge in">📈 IN</span></td>
+      <td class="num">335.74</td>
+      <td class="num entry-col">325.57</td>
+      <td class="num"><span style="color:#f59e0b">-3.1%</span></td>
+      <td class="num stop-col">310.21</td>
+      <td class="num">4.7%</td>
+      <td class="num tp1-col">356.28</td>
+      <td class="num tp2-col">390.61</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td><span style="color:#10b981">3.1%</span></td>
+      <td><span class="mini-badge badge-ok">SMA30↑</span></td>
+      <td><span class="mini-badge badge-ok">MS+</span> <span style="color:#10b981">24.4%</span></td>
+    </tr>
+    <tr style="border-left: 3px solid #8b5cf6;">
+      <td class="ticker-cell"><strong>FITB</strong> </td>
+      <td><span class="idx-sp">SP500</span></td>
+      <td><span class="badge in">📈 IN</span></td>
+      <td class="num">53.44</td>
+      <td class="num entry-col">51.86</td>
+      <td class="num"><span style="color:#f59e0b">-3.0%</span></td>
+      <td class="num stop-col">49.93</td>
+      <td class="num">3.7%</td>
+      <td class="num tp1-col">55.73</td>
+      <td class="num tp2-col">60.05</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td><span style="color:#10b981">3.0%</span></td>
+      <td><span class="mini-badge badge-ok">SMA30↑</span></td>
+      <td><span class="mini-badge badge-ok">MS+</span> <span style="color:#10b981">4.5%</span></td>
+    </tr>
+    <tr style="border-left: 3px solid #8b5cf6;">
+      <td class="ticker-cell"><strong>TRGP</strong> <span class="mini-badge badge-warn" title="Hubo un breakout fallido previo">⚠️ FBrk</span></td>
+      <td><span class="idx-sp">SP500</span></td>
+      <td><span class="badge in">📈 IN</span></td>
+      <td class="num">259.68</td>
+      <td class="num entry-col">252.60</td>
+      <td class="num"><span style="color:#f59e0b">-2.8%</span></td>
+      <td class="num stop-col">243.67</td>
+      <td class="num">3.5%</td>
+      <td class="num tp1-col">270.46</td>
+      <td class="num tp2-col">290.42</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td><span style="color:#10b981">2.8%</span></td>
+      <td><span class="mini-badge badge-ok">SMA30↑</span></td>
+      <td><span class="mini-badge badge-ok">MS+</span> <span style="color:#10b981">18.3%</span></td>
+    </tr>
+    <tr style="border-left: 3px solid #8b5cf6;">
+      <td class="ticker-cell"><strong>PLD</strong> <span class="mini-badge badge-warn" title="Hubo un breakout fallido previo">⚠️ FBrk</span></td>
+      <td><span class="idx-sp">SP500</span></td>
+      <td><span class="badge in">📈 IN</span></td>
+      <td class="num">145.07</td>
+      <td class="num entry-col">141.77</td>
+      <td class="num"><span style="color:#f59e0b">-2.3%</span></td>
+      <td class="num stop-col">135.50</td>
+      <td class="num">4.4%</td>
+      <td class="num tp1-col">154.31</td>
+      <td class="num tp2-col">168.32</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td><span style="color:#10b981">2.3%</span></td>
+      <td><span class="mini-badge badge-ok">SMA30↑</span></td>
+      <td><span class="mini-badge badge-ok">MS+</span> <span style="color:#10b981">4.8%</span></td>
+    </tr>
+    <tr style="border-left: 3px solid #8b5cf6;">
+      <td class="ticker-cell"><strong>CZR</strong> </td>
+      <td><span class="idx-sp">SP500</span></td>
+      <td><span class="badge in">📈 IN</span></td>
+      <td class="num">29.31</td>
+      <td class="num entry-col">28.80</td>
+      <td class="num"><span style="color:#f59e0b">-1.8%</span></td>
+      <td class="num stop-col">27.42</td>
+      <td class="num">4.8%</td>
+      <td class="num tp1-col">31.55</td>
+      <td class="num tp2-col">34.62</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td><span style="color:#10b981">1.8%</span></td>
+      <td><span class="mini-badge badge-ok">SMA30↑</span></td>
+      <td><span class="mini-badge badge-ok">MS+</span> <span style="color:#10b981">3.4%</span></td>
+    </tr>
+    <tr style="border-left: 3px solid #8b5cf6;">
+      <td class="ticker-cell"><strong>SLB</strong> <span class="mini-badge badge-warn" title="Hubo un breakout fallido previo">⚠️ FBrk</span></td>
+      <td><span class="idx-sp">SP500</span></td>
+      <td><span class="badge in">📈 IN</span></td>
+      <td class="num">53.07</td>
+      <td class="num entry-col">52.18</td>
+      <td class="num"><span style="color:#f59e0b">-1.7%</span></td>
+      <td class="num stop-col">48.79</td>
+      <td class="num">6.5%</td>
+      <td class="num tp1-col">58.94</td>
+      <td class="num tp2-col">66.50</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td><span style="color:#10b981">1.7%</span></td>
+      <td><span class="mini-badge badge-ok">SMA30↑</span></td>
+      <td><span class="mini-badge badge-ok">MS+</span> <span style="color:#10b981">13.0%</span></td>
+    </tr>
+    <tr style="border-left: 3px solid #8b5cf6;">
+      <td class="ticker-cell"><strong>ROST</strong> <span class="mini-badge badge-warn" title="Hubo un breakout fallido previo">⚠️ FBrk</span></td>
+      <td><span class="idx-sp">SP500</span></td>
+      <td><span class="badge in">📈 IN</span></td>
+      <td class="num">234.49</td>
+      <td class="num entry-col">230.71</td>
+      <td class="num"><span style="color:#f59e0b">-1.6%</span></td>
+      <td class="num stop-col">221.95</td>
+      <td class="num">3.8%</td>
+      <td class="num tp1-col">248.21</td>
+      <td class="num tp2-col">267.78</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td><span style="color:#10b981">1.6%</span></td>
+      <td><span class="mini-badge badge-ok">SMA30↑</span></td>
+      <td><span class="mini-badge badge-ok">MS+</span> <span style="color:#10b981">17.1%</span></td>
+    </tr>
+    <tr style="border-left: 3px solid #8b5cf6;">
+      <td class="ticker-cell"><strong>HLT</strong> </td>
+      <td><span class="idx-sp">SP500</span></td>
+      <td><span class="badge in">📈 IN</span></td>
+      <td class="num">350.22</td>
+      <td class="num entry-col">344.59</td>
+      <td class="num"><span style="color:#f59e0b">-1.6%</span></td>
+      <td class="num stop-col">330.58</td>
+      <td class="num">4.1%</td>
+      <td class="num tp1-col">372.61</td>
+      <td class="num tp2-col">403.93</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td><span style="color:#10b981">1.6%</span></td>
+      <td><span class="mini-badge badge-ok">SMA30↑</span></td>
+      <td><span class="mini-badge badge-ok">MS+</span> <span style="color:#10b981">7.9%</span></td>
+    </tr>
+    <tr style="border-left: 3px solid #8b5cf6;">
+      <td class="ticker-cell"><strong>USB</strong> </td>
+      <td><span class="idx-sp">SP500</span></td>
+      <td><span class="badge in">📈 IN</span></td>
+      <td class="num">58.89</td>
+      <td class="num entry-col">58.05</td>
+      <td class="num"><span style="color:#10b981">-1.4%</span></td>
+      <td class="num stop-col">55.86</td>
+      <td class="num">3.8%</td>
+      <td class="num tp1-col">62.42</td>
+      <td class="num tp2-col">67.30</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td><span style="color:#10b981">1.4%</span></td>
+      <td><span class="mini-badge badge-ok">SMA30↑</span></td>
+      <td><span class="mini-badge badge-ok">MS+</span> <span style="color:#10b981">4.4%</span></td>
+    </tr>
+    <tr style="border-left: 3px solid #8b5cf6;">
+      <td class="ticker-cell"><strong>CFG</strong> </td>
+      <td><span class="idx-sp">SP500</span></td>
+      <td><span class="badge in">📈 IN</span></td>
+      <td class="num">67.27</td>
+      <td class="num entry-col">66.37</td>
+      <td class="num"><span style="color:#10b981">-1.4%</span></td>
+      <td class="num stop-col">63.84</td>
+      <td class="num">3.8%</td>
+      <td class="num tp1-col">71.44</td>
+      <td class="num tp2-col">77.10</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td><span style="color:#10b981">1.4%</span></td>
+      <td><span class="mini-badge badge-ok">SMA30↑</span></td>
+      <td><span class="mini-badge badge-ok">MS+</span> <span style="color:#10b981">8.3%</span></td>
+    </tr></tbody>
+        </table>
+      </div>
+    </div>
+  
+    <div class="section">
+      <div class="section-title" style="color:#3b82f6">📊 SETUPS ACTIVOS
+        <span class="count">33</span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Ticker</th><th>Índice</th><th>Señal</th>
+              <th>Close</th><th>Entry</th><th>Dist%</th>
+              <th>Stop</th><th>Riesgo%</th>
+              <th>TP1</th><th>TP2</th><th>R:R</th>
+              <th>P&L</th><th>SMA30</th><th>Mansfield</th>
+            </tr>
+          </thead>
+          <tbody>
+    <tr style="border-left: 3px solid #3b82f6;">
+      <td class="ticker-cell"><strong>TXT</strong> <span class="mini-badge badge-warn" title="Hubo un breakout fallido previo">⚠️ FBrk</span></td>
+      <td><span class="idx-sp">SP500</span></td>
+      <td><span class="badge setup">📊 SETUP</span></td>
+      <td class="num">93.74</td>
+      <td class="num entry-col">96.94</td>
+      <td class="num"><span style="color:#f59e0b">3.3%</span></td>
+      <td class="num stop-col">92.10</td>
+      <td class="num">5.0%</td>
+      <td class="num tp1-col">106.61</td>
+      <td class="num tp2-col">117.41</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td>—</td>
+      <td><span class="mini-badge badge-ok">SMA30↑</span></td>
+      <td><span class="mini-badge badge-ko">MS−</span> <span style="color:#ef4444">-3.3%</span></td>
+    </tr>
+    <tr style="border-left: 3px solid #3b82f6;">
+      <td class="ticker-cell"><strong>LYG</strong> </td>
+      <td><span class="idx-nq">NASDAQ</span></td>
+      <td><span class="badge setup">📊 SETUP</span></td>
+      <td class="num">5.56</td>
+      <td class="num entry-col">5.75</td>
+      <td class="num"><span style="color:#f59e0b">3.3%</span></td>
+      <td class="num stop-col">5.47</td>
+      <td class="num">4.8%</td>
+      <td class="num tp1-col">6.30</td>
+      <td class="num tp2-col">6.91</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td>—</td>
+      <td><span class="mini-badge badge-ok">SMA30↑</span></td>
+      <td><span class="mini-badge badge-ok">MS+</span> <span style="color:#10b981">2.6%</span></td>
+    </tr>
+    <tr style="border-left: 3px solid #3b82f6;">
+      <td class="ticker-cell"><strong>ERIC</strong> <span class="mini-badge badge-warn" title="Hubo un breakout fallido previo">⚠️ FBrk</span></td>
+      <td><span class="idx-nq">NASDAQ</span></td>
+      <td><span class="badge setup">📊 SETUP</span></td>
+      <td class="num">11.75</td>
+      <td class="num entry-col">12.19</td>
+      <td class="num"><span style="color:#94a3b8">3.6%</span></td>
+      <td class="num stop-col">11.75</td>
+      <td class="num">3.6%</td>
+      <td class="num tp1-col">13.07</td>
+      <td class="num tp2-col">14.05</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td>—</td>
+      <td><span class="mini-badge badge-ok">SMA30↑</span></td>
+      <td><span class="mini-badge badge-ok">MS+</span> <span style="color:#10b981">8.2%</span></td>
+    </tr>
+    <tr style="border-left: 3px solid #3b82f6;">
+      <td class="ticker-cell"><strong>NVDA</strong> <span class="mini-badge badge-warn" title="Hubo un breakout fallido previo">⚠️ FBrk</span></td>
+      <td><span class="idx-sp">SP500</span></td>
+      <td><span class="badge setup">📊 SETUP</span></td>
+      <td class="num">207.41</td>
+      <td class="num entry-col">216.58</td>
+      <td class="num"><span style="color:#94a3b8">4.2%</span></td>
+      <td class="num stop-col">208.15</td>
+      <td class="num">3.9%</td>
+      <td class="num tp1-col">233.43</td>
+      <td class="num tp2-col">252.28</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td>—</td>
+      <td><span class="mini-badge badge-ok">SMA30↑</span></td>
+      <td><span class="mini-badge badge-ok">MS+</span> <span style="color:#10b981">0.6%</span></td>
+    </tr>
+    <tr style="border-left: 3px solid #3b82f6;">
+      <td class="ticker-cell"><strong>AME</strong> </td>
+      <td><span class="idx-sp">SP500</span></td>
+      <td><span class="badge setup">📊 SETUP</span></td>
+      <td class="num">231.55</td>
+      <td class="num entry-col">242.82</td>
+      <td class="num"><span style="color:#94a3b8">4.6%</span></td>
+      <td class="num stop-col">233.97</td>
+      <td class="num">3.6%</td>
+      <td class="num tp1-col">260.50</td>
+      <td class="num tp2-col">280.27</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td>—</td>
+      <td><span class="mini-badge badge-ok">SMA30↑</span></td>
+      <td><span class="mini-badge badge-ok">MS+</span> <span style="color:#10b981">1.4%</span></td>
+    </tr>
+    <tr style="border-left: 3px solid #3b82f6;">
+      <td class="ticker-cell"><strong>PM</strong> </td>
+      <td><span class="idx-sp">SP500</span></td>
+      <td><span class="badge setup">📊 SETUP</span></td>
+      <td class="num">184.06</td>
+      <td class="num entry-col">193.05</td>
+      <td class="num"><span style="color:#94a3b8">4.7%</span></td>
+      <td class="num stop-col">184.24</td>
+      <td class="num">4.6%</td>
+      <td class="num tp1-col">210.66</td>
+      <td class="num tp2-col">230.34</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td>—</td>
+      <td><span class="mini-badge badge-ok">SMA30↑</span></td>
+      <td><span class="mini-badge badge-ko">MS−</span> <span style="color:#ef4444">-0.2%</span></td>
+    </tr>
+    <tr style="border-left: 3px solid #3b82f6;">
+      <td class="ticker-cell"><strong>APD</strong> <span class="mini-badge badge-warn" title="Hubo un breakout fallido previo">⚠️ FBrk</span></td>
+      <td><span class="idx-sp">SP500</span></td>
+      <td><span class="badge setup">📊 SETUP</span></td>
+      <td class="num">280.48</td>
+      <td class="num entry-col">294.61</td>
+      <td class="num"><span style="color:#94a3b8">4.8%</span></td>
+      <td class="num stop-col">283.85</td>
+      <td class="num">3.7%</td>
+      <td class="num tp1-col">316.13</td>
+      <td class="num tp2-col">340.18</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td>—</td>
+      <td><span class="mini-badge badge-ok">SMA30↑</span></td>
+      <td><span class="mini-badge badge-ko">MS−</span> <span style="color:#ef4444">-8.3%</span></td>
+    </tr>
+    <tr style="border-left: 3px solid #3b82f6;">
+      <td class="ticker-cell"><strong>BKR</strong> <span class="mini-badge badge-warn" title="Hubo un breakout fallido previo">⚠️ FBrk</span></td>
+      <td><span class="idx-sp">SP500</span></td>
+      <td><span class="badge setup">📊 SETUP</span></td>
+      <td class="num">61.52</td>
+      <td class="num entry-col">64.70</td>
+      <td class="num"><span style="color:#94a3b8">4.9%</span></td>
+      <td class="num stop-col">62.23</td>
+      <td class="num">3.8%</td>
+      <td class="num tp1-col">69.65</td>
+      <td class="num tp2-col">75.19</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td>—</td>
+      <td><span class="mini-badge badge-ok">SMA30↑</span></td>
+      <td><span class="mini-badge badge-ok">MS+</span> <span style="color:#10b981">6.1%</span></td>
+    </tr>
+    <tr style="border-left: 3px solid #3b82f6;">
+      <td class="ticker-cell"><strong>BIIB</strong> </td>
+      <td><span class="idx-sp">SP500</span></td>
+      <td><span class="badge setup">📊 SETUP</span></td>
+      <td class="num">195.61</td>
+      <td class="num entry-col">205.97</td>
+      <td class="num"><span style="color:#94a3b8">5.0%</span></td>
+      <td class="num stop-col">197.92</td>
+      <td class="num">3.9%</td>
+      <td class="num tp1-col">222.07</td>
+      <td class="num tp2-col">240.06</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td>—</td>
+      <td><span class="mini-badge badge-ok">SMA30↑</span></td>
+      <td><span class="mini-badge badge-ok">MS+</span> <span style="color:#10b981">5.6%</span></td>
+    </tr>
+    <tr style="border-left: 3px solid #3b82f6;">
+      <td class="ticker-cell"><strong>DOV</strong> </td>
+      <td><span class="idx-sp">SP500</span></td>
+      <td><span class="badge setup">📊 SETUP</span></td>
+      <td class="num">222.63</td>
+      <td class="num entry-col">236.42</td>
+      <td class="num"><span style="color:#94a3b8">5.8%</span></td>
+      <td class="num stop-col">222.56</td>
+      <td class="num">5.9%</td>
+      <td class="num tp1-col">264.13</td>
+      <td class="num tp2-col">295.11</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td>—</td>
+      <td><span class="mini-badge badge-ok">SMA30↑</span></td>
+      <td><span class="mini-badge badge-ok">MS+</span> <span style="color:#10b981">2.3%</span></td>
+    </tr>
+    <tr style="border-left: 3px solid #3b82f6;">
+      <td class="ticker-cell"><strong>SBUX</strong> </td>
+      <td><span class="idx-sp">SP500</span></td>
+      <td><span class="badge setup">📊 SETUP</span></td>
+      <td class="num">101.68</td>
+      <td class="num entry-col">108.25</td>
+      <td class="num"><span style="color:#94a3b8">6.1%</span></td>
+      <td class="num stop-col">102.67</td>
+      <td class="num">5.2%</td>
+      <td class="num tp1-col">119.40</td>
+      <td class="num tp2-col">131.88</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td>—</td>
+      <td><span class="mini-badge badge-ok">SMA30↑</span></td>
+      <td><span class="mini-badge badge-ok">MS+</span> <span style="color:#10b981">0.7%</span></td>
+    </tr>
+    <tr style="border-left: 3px solid #3b82f6;">
+      <td class="ticker-cell"><strong>ETN</strong> </td>
+      <td><span class="idx-sp">SP500</span></td>
+      <td><span class="badge setup">📊 SETUP</span></td>
+      <td class="num">407.71</td>
+      <td class="num entry-col">434.23</td>
+      <td class="num"><span style="color:#94a3b8">6.1%</span></td>
+      <td class="num stop-col">408.79</td>
+      <td class="num">5.9%</td>
+      <td class="num tp1-col">485.10</td>
+      <td class="num tp2-col">541.97</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td>—</td>
+      <td><span class="mini-badge badge-ok">SMA30↑</span></td>
+      <td><span class="mini-badge badge-ok">MS+</span> <span style="color:#10b981">0.3%</span></td>
+    </tr>
+    <tr style="border-left: 3px solid #3b82f6;">
+      <td class="ticker-cell"><strong>MRNA</strong> </td>
+      <td><span class="idx-sp">SP500</span></td>
+      <td><span class="badge setup">📊 SETUP</span></td>
+      <td class="num">55.40</td>
+      <td class="num entry-col">59.48</td>
+      <td class="num"><span style="color:#94a3b8">6.9%</span></td>
+      <td class="num stop-col">53.53</td>
+      <td class="num">10.0%</td>
+      <td class="num tp1-col">71.38</td>
+      <td class="num tp2-col">84.69</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td>—</td>
+      <td><span class="mini-badge badge-ok">SMA30↑</span></td>
+      <td><span class="mini-badge badge-ok">MS+</span> <span style="color:#10b981">34.6%</span></td>
+    </tr>
+    <tr style="border-left: 3px solid #3b82f6;">
+      <td class="ticker-cell"><strong>O</strong> </td>
+      <td><span class="idx-sp">SP500</span></td>
+      <td><span class="badge setup">📊 SETUP</span></td>
+      <td class="num">62.17</td>
+      <td class="num entry-col">66.84</td>
+      <td class="num"><span style="color:#94a3b8">7.0%</span></td>
+      <td class="num stop-col">63.87</td>
+      <td class="num">4.4%</td>
+      <td class="num tp1-col">72.77</td>
+      <td class="num tp2-col">79.40</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td>—</td>
+      <td><span class="mini-badge badge-ok">SMA30↑</span></td>
+      <td><span class="mini-badge badge-ko">MS−</span> <span style="color:#ef4444">-4.9%</span></td>
+    </tr>
+    <tr style="border-left: 3px solid #3b82f6;">
+      <td class="ticker-cell"><strong>VLO</strong> </td>
+      <td><span class="idx-sp">SP500</span></td>
+      <td><span class="badge setup">📊 SETUP</span></td>
+      <td class="num">244.13</td>
+      <td class="num entry-col">262.50</td>
+      <td class="num"><span style="color:#94a3b8">7.0%</span></td>
+      <td class="num stop-col">251.32</td>
+      <td class="num">4.3%</td>
+      <td class="num tp1-col">284.87</td>
+      <td class="num tp2-col">309.87</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td>—</td>
+      <td><span class="mini-badge badge-ok">SMA30↑</span></td>
+      <td><span class="mini-badge badge-ok">MS+</span> <span style="color:#10b981">17.6%</span></td>
+    </tr>
+    <tr style="border-left: 3px solid #3b82f6;">
+      <td class="ticker-cell"><strong>FANG</strong> <span class="mini-badge badge-warn" title="Hubo un breakout fallido previo">⚠️ FBrk</span></td>
+      <td><span class="idx-sp">SP500</span></td>
+      <td><span class="badge setup">📊 SETUP</span></td>
+      <td class="num">188.12</td>
+      <td class="num entry-col">203.79</td>
+      <td class="num"><span style="color:#94a3b8">7.7%</span></td>
+      <td class="num stop-col">190.74</td>
+      <td class="num">6.4%</td>
+      <td class="num tp1-col">229.90</td>
+      <td class="num tp2-col">259.08</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td>—</td>
+      <td><span class="mini-badge badge-ok">SMA30↑</span></td>
+      <td><span class="mini-badge badge-ok">MS+</span> <span style="color:#10b981">5.6%</span></td>
+    </tr>
+    <tr style="border-left: 3px solid #3b82f6;">
+      <td class="ticker-cell"><strong>VTRS</strong> </td>
+      <td><span class="idx-sp">SP500</span></td>
+      <td><span class="badge setup">📊 SETUP</span></td>
+      <td class="num">16.04</td>
+      <td class="num entry-col">17.40</td>
+      <td class="num"><span style="color:#94a3b8">7.8%</span></td>
+      <td class="num stop-col">16.68</td>
+      <td class="num">4.2%</td>
+      <td class="num tp1-col">18.86</td>
+      <td class="num tp2-col">20.48</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td>—</td>
+      <td><span class="mini-badge badge-ok">SMA30↑</span></td>
+      <td><span class="mini-badge badge-ok">MS+</span> <span style="color:#10b981">19.9%</span></td>
+    </tr>
+    <tr style="border-left: 3px solid #3b82f6;">
+      <td class="ticker-cell"><strong>VZ</strong> </td>
+      <td><span class="idx-sp">SP500</span></td>
+      <td><span class="badge setup">📊 SETUP</span></td>
+      <td class="num">46.73</td>
+      <td class="num entry-col">50.91</td>
+      <td class="num"><span style="color:#94a3b8">8.2%</span></td>
+      <td class="num stop-col">48.38</td>
+      <td class="num">5.0%</td>
+      <td class="num tp1-col">55.99</td>
+      <td class="num tp2-col">61.66</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td>—</td>
+      <td><span class="mini-badge badge-ok">SMA30↑</span></td>
+      <td><span class="mini-badge badge-ko">MS−</span> <span style="color:#ef4444">-2.6%</span></td>
+    </tr>
+    <tr style="border-left: 3px solid #3b82f6;">
+      <td class="ticker-cell"><strong>NVS</strong> </td>
+      <td><span class="idx-nq">NASDAQ</span></td>
+      <td><span class="badge setup">📊 SETUP</span></td>
+      <td class="num">150.93</td>
+      <td class="num entry-col">165.43</td>
+      <td class="num"><span style="color:#94a3b8">8.8%</span></td>
+      <td class="num stop-col">156.57</td>
+      <td class="num">5.4%</td>
+      <td class="num tp1-col">183.13</td>
+      <td class="num tp2-col">202.92</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td>—</td>
+      <td><span class="mini-badge badge-ok">SMA30↑</span></td>
+      <td><span class="mini-badge badge-ok">MS+</span> <span style="color:#10b981">0.4%</span></td>
+    </tr>
+    <tr style="border-left: 3px solid #3b82f6;">
+      <td class="ticker-cell"><strong>BTI</strong> </td>
+      <td><span class="idx-nq">NASDAQ</span></td>
+      <td><span class="badge setup">📊 SETUP</span></td>
+      <td class="num">61.38</td>
+      <td class="num entry-col">67.30</td>
+      <td class="num"><span style="color:#94a3b8">8.8%</span></td>
+      <td class="num stop-col">63.65</td>
+      <td class="num">5.4%</td>
+      <td class="num tp1-col">74.60</td>
+      <td class="num tp2-col">82.75</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td>—</td>
+      <td><span class="mini-badge badge-ok">SMA30↑</span></td>
+      <td><span class="mini-badge badge-ko">MS−</span> <span style="color:#ef4444">-0.8%</span></td>
+    </tr>
+    <tr style="border-left: 3px solid #3b82f6;">
+      <td class="ticker-cell"><strong>PSX</strong> </td>
+      <td><span class="idx-sp">SP500</span></td>
+      <td><span class="badge setup">📊 SETUP</span></td>
+      <td class="num">172.00</td>
+      <td class="num entry-col">189.24</td>
+      <td class="num"><span style="color:#94a3b8">9.1%</span></td>
+      <td class="num stop-col">175.19</td>
+      <td class="num">7.4%</td>
+      <td class="num tp1-col">217.32</td>
+      <td class="num tp2-col">248.72</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td>—</td>
+      <td><span class="mini-badge badge-ok">SMA30↑</span></td>
+      <td><span class="mini-badge badge-ok">MS+</span> <span style="color:#10b981">7.4%</span></td>
+    </tr>
+    <tr style="border-left: 3px solid #3b82f6;">
+      <td class="ticker-cell"><strong>HAL</strong> <span class="mini-badge badge-warn" title="Hubo un breakout fallido previo">⚠️ FBrk</span></td>
+      <td><span class="idx-sp">SP500</span></td>
+      <td><span class="badge setup">📊 SETUP</span></td>
+      <td class="num">37.20</td>
+      <td class="num entry-col">41.01</td>
+      <td class="num"><span style="color:#94a3b8">9.3%</span></td>
+      <td class="num stop-col">38.85</td>
+      <td class="num">5.3%</td>
+      <td class="num tp1-col">45.32</td>
+      <td class="num tp2-col">50.14</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td>—</td>
+      <td><span class="mini-badge badge-ok">SMA30↑</span></td>
+      <td><span class="mini-badge badge-ok">MS+</span> <span style="color:#10b981">12.7%</span></td>
+    </tr>
+    <tr style="border-left: 3px solid #3b82f6;">
+      <td class="ticker-cell"><strong>KMI</strong> </td>
+      <td><span class="idx-sp">SP500</span></td>
+      <td><span class="badge setup">📊 SETUP</span></td>
+      <td class="num">31.44</td>
+      <td class="num entry-col">34.81</td>
+      <td class="num"><span style="color:#94a3b8">9.7%</span></td>
+      <td class="num stop-col">33.29</td>
+      <td class="num">4.4%</td>
+      <td class="num tp1-col">37.86</td>
+      <td class="num tp2-col">41.27</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td>—</td>
+      <td><span class="mini-badge badge-ok">SMA30↑</span></td>
+      <td><span class="mini-badge badge-ko">MS−</span> <span style="color:#ef4444">-2.1%</span></td>
+    </tr>
+    <tr style="border-left: 3px solid #3b82f6;">
+      <td class="ticker-cell"><strong>WMB</strong> </td>
+      <td><span class="idx-sp">SP500</span></td>
+      <td><span class="badge setup">📊 SETUP</span></td>
+      <td class="num">71.48</td>
+      <td class="num entry-col">79.49</td>
+      <td class="num"><span style="color:#94a3b8">10.1%</span></td>
+      <td class="num stop-col">75.67</td>
+      <td class="num">4.8%</td>
+      <td class="num tp1-col">87.13</td>
+      <td class="num tp2-col">95.67</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td>—</td>
+      <td><span class="mini-badge badge-ok">SMA30↑</span></td>
+      <td><span class="mini-badge badge-ok">MS+</span> <span style="color:#10b981">0.5%</span></td>
+    </tr>
+    <tr style="border-left: 3px solid #3b82f6;">
+      <td class="ticker-cell"><strong>OKE</strong> </td>
+      <td><span class="idx-sp">SP500</span></td>
+      <td><span class="badge setup">📊 SETUP</span></td>
+      <td class="num">86.31</td>
+      <td class="num entry-col">96.07</td>
+      <td class="num"><span style="color:#94a3b8">10.2%</span></td>
+      <td class="num stop-col">91.29</td>
+      <td class="num">5.0%</td>
+      <td class="num tp1-col">105.62</td>
+      <td class="num tp2-col">116.29</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td>—</td>
+      <td><span class="mini-badge badge-ok">SMA30↑</span></td>
+      <td><span class="mini-badge badge-ok">MS+</span> <span style="color:#10b981">0.2%</span></td>
+    </tr>
+    <tr style="border-left: 3px solid #3b82f6;">
+      <td class="ticker-cell"><strong>BG</strong> </td>
+      <td><span class="idx-sp">SP500</span></td>
+      <td><span class="badge setup">📊 SETUP</span></td>
+      <td class="num">119.42</td>
+      <td class="num entry-col">133.13</td>
+      <td class="num"><span style="color:#94a3b8">10.3%</span></td>
+      <td class="num stop-col">127.23</td>
+      <td class="num">4.4%</td>
+      <td class="num tp1-col">144.93</td>
+      <td class="num tp2-col">158.12</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td>—</td>
+      <td><span class="mini-badge badge-ok">SMA30↑</span></td>
+      <td><span class="mini-badge badge-ok">MS+</span> <span style="color:#10b981">6.8%</span></td>
+    </tr>
+    <tr style="border-left: 3px solid #3b82f6;">
+      <td class="ticker-cell"><strong>NET</strong> </td>
+      <td><span class="idx-nq">NASDAQ</span></td>
+      <td><span class="badge setup">📊 SETUP</span></td>
+      <td class="num">230.97</td>
+      <td class="num entry-col">258.88</td>
+      <td class="num"><span style="color:#94a3b8">10.8%</span></td>
+      <td class="num stop-col">230.94</td>
+      <td class="num">10.8%</td>
+      <td class="num tp1-col">314.75</td>
+      <td class="num tp2-col">377.20</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td>—</td>
+      <td><span class="mini-badge badge-ok">SMA30↑</span></td>
+      <td><span class="mini-badge badge-ok">MS+</span> <span style="color:#10b981">1.5%</span></td>
+    </tr>
+    <tr style="border-left: 3px solid #3b82f6;">
+      <td class="ticker-cell"><strong>OXY</strong> </td>
+      <td><span class="idx-sp">SP500</span></td>
+      <td><span class="badge setup">📊 SETUP</span></td>
+      <td class="num">53.67</td>
+      <td class="num entry-col">60.51</td>
+      <td class="num"><span style="color:#94a3b8">11.3%</span></td>
+      <td class="num stop-col">57.54</td>
+      <td class="num">4.9%</td>
+      <td class="num tp1-col">66.44</td>
+      <td class="num tp2-col">73.07</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td>—</td>
+      <td><span class="mini-badge badge-ok">SMA30↑</span></td>
+      <td><span class="mini-badge badge-ok">MS+</span> <span style="color:#10b981">1.0%</span></td>
+    </tr>
+    <tr style="border-left: 3px solid #3b82f6;">
+      <td class="ticker-cell"><strong>CTRA</strong> </td>
+      <td><span class="idx-sp">SP500</span></td>
+      <td><span class="badge setup">📊 SETUP</span></td>
+      <td class="num">32.56</td>
+      <td class="num entry-col">36.88</td>
+      <td class="num"><span style="color:#94a3b8">11.7%</span></td>
+      <td class="num stop-col">34.00</td>
+      <td class="num">7.8%</td>
+      <td class="num tp1-col">42.64</td>
+      <td class="num tp2-col">49.09</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td>—</td>
+      <td><span class="mini-badge badge-ok">SMA30↑</span></td>
+      <td><span class="mini-badge badge-ok">MS+</span> <span style="color:#10b981">8.2%</span></td>
+    </tr>
+    <tr style="border-left: 3px solid #3b82f6;">
+      <td class="ticker-cell"><strong>INTC</strong> </td>
+      <td><span class="idx-sp">SP500</span></td>
+      <td><span class="badge setup">📊 SETUP</span></td>
+      <td class="num">117.05</td>
+      <td class="num entry-col">132.75</td>
+      <td class="num"><span style="color:#94a3b8">11.8%</span></td>
+      <td class="num stop-col">119.60</td>
+      <td class="num">9.9%</td>
+      <td class="num tp1-col">159.05</td>
+      <td class="num tp2-col">188.44</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td>—</td>
+      <td><span class="mini-badge badge-ok">SMA30↑</span></td>
+      <td><span class="mini-badge badge-ok">MS+</span> <span style="color:#10b981">117.1%</span></td>
+    </tr>
+    <tr style="border-left: 3px solid #3b82f6;">
+      <td class="ticker-cell"><strong>EOG</strong> </td>
+      <td><span class="idx-sp">SP500</span></td>
+      <td><span class="badge setup">📊 SETUP</span></td>
+      <td class="num">132.05</td>
+      <td class="num entry-col">150.70</td>
+      <td class="num"><span style="color:#94a3b8">12.4%</span></td>
+      <td class="num stop-col">140.25</td>
+      <td class="num">6.9%</td>
+      <td class="num tp1-col">171.59</td>
+      <td class="num tp2-col">194.95</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td>—</td>
+      <td><span class="mini-badge badge-ok">SMA30↑</span></td>
+      <td><span class="mini-badge badge-ko">MS−</span> <span style="color:#ef4444">-0.1%</span></td>
+    </tr>
+    <tr style="border-left: 3px solid #3b82f6;">
+      <td class="ticker-cell"><strong>CVX</strong> </td>
+      <td><span class="idx-sp">SP500</span></td>
+      <td><span class="badge setup">📊 SETUP</span></td>
+      <td class="num">180.11</td>
+      <td class="num entry-col">212.76</td>
+      <td class="num"><span style="color:#94a3b8">15.3%</span></td>
+      <td class="num stop-col">198.77</td>
+      <td class="num">6.6%</td>
+      <td class="num tp1-col">240.75</td>
+      <td class="num tp2-col">272.04</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td>—</td>
+      <td><span class="mini-badge badge-ok">SMA30↑</span></td>
+      <td><span class="mini-badge badge-ko">MS−</span> <span style="color:#ef4444">-1.8%</span></td>
+    </tr>
+    <tr style="border-left: 3px solid #3b82f6;">
+      <td class="ticker-cell"><strong>APA</strong> </td>
+      <td><span class="idx-sp">SP500</span></td>
+      <td><span class="badge setup">📊 SETUP</span></td>
+      <td class="num">34.26</td>
+      <td class="num entry-col">45.36</td>
+      <td class="num"><span style="color:#94a3b8">24.5%</span></td>
+      <td class="num stop-col">40.72</td>
+      <td class="num">10.2%</td>
+      <td class="num tp1-col">54.64</td>
+      <td class="num tp2-col">65.01</td>
+      <td class="num"><span style="color:#f59e0b">2.00</span></td>
+      <td>—</td>
+      <td><span class="mini-badge badge-ok">SMA30↑</span></td>
+      <td><span class="mini-badge badge-ok">MS+</span> <span style="color:#10b981">12.4%</span></td>
+    </tr></tbody>
+        </table>
+      </div>
+    </div>
+</div>
+
+<div class="footer">
+  ASP-B Weekly Strategy v2 · Pivot lengths 2–5 · EMA21 · Fib 0.618 / 1.764 / 2.618<br>
+  Stop = 1st Pivot (Fib 0.618) · TP1 = Fib 1.764 · Mansfield RS vs SPY (MA52w)<br>
+  <em>No constituye asesoramiento financiero. Verificar siempre en gráfico semanal.</em>
+</div>
+
+</body>
+</html>

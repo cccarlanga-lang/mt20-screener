@@ -8,6 +8,9 @@ on:
   # Boton manual para enviar cuando quieras
   workflow_dispatch:
 
+permissions:
+  contents: write   # necesario para hacer push del dashboard
+
 jobs:
   send-telegram:
     runs-on: ubuntu-latest
@@ -16,6 +19,8 @@ jobs:
     steps:
       - name: Descargar codigo
         uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Instalar Python 3.11
         uses: actions/setup-python@v5
@@ -25,9 +30,17 @@ jobs:
       - name: Instalar dependencias
         run: pip install -r requirements.txt
 
-      - name: Ejecutar screener y enviar Telegram
+      - name: Ejecutar screener, generar dashboard y enviar Telegram
         env:
           TG_BOT_TOKEN: ${{ secrets.TG_BOT_TOKEN }}
           TG_CHAT_ID: ${{ secrets.TG_CHAT_ID }}
           PYTHONIOENCODING: utf-8
         run: python aspb_telegram.py
+
+      - name: Publicar dashboard en GitHub Pages
+        run: |
+          git config user.name "ASP-B Bot"
+          git config user.email "aspb-bot@github-actions"
+          git add docs/aspb.html
+          git diff --staged --quiet || git commit -m "dashboard: ASP-B screener $(date +%Y-%m-%d) [skip ci]"
+          git push

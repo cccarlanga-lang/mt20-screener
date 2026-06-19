@@ -22,8 +22,11 @@ import os, json, datetime, time, threading, logging, sys
 import urllib.request, urllib.error
 import numpy as np, pandas as pd
 
-BASE_DIR    = os.path.dirname(os.path.abspath(__file__))
-CONFIG_FILE = os.path.join(BASE_DIR, "telegram_config.json")
+BASE_DIR      = os.path.dirname(os.path.abspath(__file__))
+CONFIG_FILE   = os.path.join(BASE_DIR, "telegram_config.json")
+DOCS_DIR      = os.path.join(BASE_DIR, "docs")
+DOCS_HTML     = os.path.join(DOCS_DIR, "aspb.html")
+DASHBOARD_URL = "https://cccarlanga-lang.github.io/mt20-screener/aspb.html"
 _LOG = logging.getLogger("aspb_telegram")
 
 _DEFAULT_CONFIG = {
@@ -336,6 +339,8 @@ def build_message(df, last_update, stats=None, spy_ctx=None):
         _SEP2,
         "<i>Orden en el broker: <b>BUY STOP</b> al precio ENTRY.</i>",
         "<i>Si se activa → coloca <b>STOP-LOSS</b> de inmediato.</i>",
+        "",
+        f'📊 <a href="{DASHBOARD_URL}">Ver dashboard completo</a>',
     ]
 
     return "\n".join(lines)
@@ -636,6 +641,17 @@ if __name__ == "__main__":
             sys.exit(0)
 
         print(f"  OK Screener listo - {len(df_test)} setups encontrados.")
+
+        # ── Guardar HTML en docs/ para GitHub Pages ───────────────────────────
+        try:
+            from aspb_screener import generate_html
+            os.makedirs(DOCS_DIR, exist_ok=True)
+            html_content = generate_html(df_test, datetime.datetime.now())
+            with open(DOCS_HTML, "w", encoding="utf-8") as f:
+                f.write(html_content)
+            print(f"  [HTML] Dashboard guardado: {DOCS_HTML}")
+        except Exception as html_err:
+            print(f"  [HTML] Error generando dashboard: {html_err}")
 
     except Exception as exc:
         print(f"  [!] Error ejecutando screener: {exc}")
